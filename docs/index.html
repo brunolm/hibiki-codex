@@ -16,7 +16,7 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://hibikicodex.com" />
-    <meta name="theme-color" content="#14110f" />
+    <meta name="theme-color" content="#0a0716" />
 
     <link
       rel="preconnect"
@@ -30,16 +30,20 @@
 
     <style>
       :root {
-        --bg: #14110f;
-        --bg-elev: #1d1916;
-        --bg-elev-2: #251f1a;
-        --ink: #e8dfd0;
-        --ink-dim: #8a8378;
-        --ink-faint: #5b554d;
-        --accent: #c1402d;
-        --accent-soft: #d97a6c;
-        --gold: #c9a96e;
-        --border: #2b2521;
+        /* Palette pulled from the Hibiki illustration:
+           deep violet-black canvas, magical purple aura, codex-gold accents. */
+        --bg: #0a0716;
+        --bg-elev: #15102a;
+        --bg-elev-2: #1d1739;
+        --ink: #ece5f5;
+        --ink-dim: #a499c3;
+        --ink-faint: #6c5e8c;
+        --accent: #d4ac4f;        /* codex gold — primary */
+        --accent-soft: #e8c668;   /* gold hover */
+        --gold: #d4ac4f;
+        --glow: #7c4dff;          /* purple aura */
+        --glow-soft: #a58aff;
+        --border: #2b2257;
         --radius: 10px;
         --max-w: 1080px;
 
@@ -70,14 +74,19 @@
         -moz-osx-font-smoothing: grayscale;
         background-image:
           radial-gradient(
-            ellipse 60% 40% at 70% -10%,
-            rgba(193, 64, 45, 0.12),
+            ellipse 70% 50% at 80% -5%,
+            rgba(124, 77, 255, 0.22),
             transparent 60%
           ),
           radial-gradient(
-            ellipse 50% 30% at 10% 30%,
-            rgba(201, 169, 110, 0.06),
-            transparent 60%
+            ellipse 60% 40% at 5% 20%,
+            rgba(165, 138, 255, 0.08),
+            transparent 65%
+          ),
+          radial-gradient(
+            ellipse 80% 40% at 50% 100%,
+            rgba(212, 172, 79, 0.05),
+            transparent 70%
           );
       }
 
@@ -95,9 +104,15 @@
         padding: 0 24px;
       }
 
-      /* Header */
+      /* Header — sticky with frosted-glass backdrop */
       header {
-        padding: 28px 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 16px 0;
+        background: rgba(10, 7, 22, 0.78);
+        backdrop-filter: blur(14px) saturate(140%);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
         border-bottom: 1px solid var(--border);
       }
       header .container {
@@ -108,23 +123,26 @@
       .brand {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
         font-weight: 600;
         letter-spacing: 0.01em;
       }
-      .brand .kanji {
-        font-family: var(--serif);
-        font-size: 28px;
-        color: var(--accent);
-        line-height: 1;
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        object-fit: cover;
+        display: block;
+        box-shadow: 0 0 16px -2px rgba(124, 77, 255, 0.4);
       }
       .brand .name {
-        font-size: 18px;
+        font-size: 22px;
+        line-height: 1.1;
       }
       nav a {
-        margin-left: 24px;
+        margin-left: 28px;
         color: var(--ink-dim);
-        font-size: 14px;
+        font-size: 16px;
       }
       nav a:hover {
         color: var(--ink);
@@ -134,6 +152,51 @@
       .hero {
         padding: 96px 0 80px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Hibiki illustration as a faded backdrop figure. Anchored to the
+         centered 1080px container (not the full viewport) so she stays near
+         the headline on ultrawide monitors instead of drifting to the edge.
+         mix-blend-mode: screen + a radial mask drops her dark background
+         straight into the page, leaving only the glowing aura visible. */
+      .hero .container {
+        position: relative;
+        z-index: 1;
+      }
+      .hero .container > *:not(.hibiki-figure) {
+        position: relative;
+        z-index: 1;
+      }
+      .hibiki-figure {
+        position: absolute;
+        top: -40px;
+        right: -120px;
+        width: 520px;
+        max-width: 55%;
+        height: auto;
+        opacity: 0.6;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 0;
+        -webkit-mask-image: radial-gradient(
+          ellipse 65% 75% at 50% 45%,
+          #000 30%,
+          transparent 78%
+        );
+        mask-image: radial-gradient(
+          ellipse 65% 75% at 50% 45%,
+          #000 30%,
+          transparent 78%
+        );
+      }
+      @media (max-width: 760px) {
+        .hibiki-figure {
+          opacity: 0.3;
+          right: -10%;
+          width: 90%;
+          max-width: 90%;
+        }
       }
       .hero .kanji-mark {
         font-family: var(--serif);
@@ -141,7 +204,9 @@
         color: var(--accent);
         line-height: 1;
         margin-bottom: 12px;
-        text-shadow: 0 0 40px rgba(193, 64, 45, 0.25);
+        text-shadow:
+          0 0 40px rgba(212, 172, 79, 0.35),
+          0 0 80px rgba(124, 77, 255, 0.25);
       }
       .hero .pronounce {
         color: var(--ink-dim);
@@ -154,6 +219,8 @@
         font-size: clamp(32px, 5vw, 52px);
         font-weight: 700;
         letter-spacing: -0.02em;
+        line-height: 1.15;
+        text-wrap: balance;
         margin: 0 0 16px;
       }
       .hero .tagline {
@@ -172,10 +239,10 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 22px;
+        padding: 14px 26px;
         border-radius: var(--radius);
         font-weight: 500;
-        font-size: 15px;
+        font-size: 17px;
         transition:
           background 0.15s,
           border-color 0.15s,
@@ -184,11 +251,12 @@
       }
       .btn-primary {
         background: var(--accent);
-        color: #fff;
+        color: #1a1124;
+        box-shadow: 0 0 24px rgba(212, 172, 79, 0.25);
       }
       .btn-primary:hover {
-        background: #d04a35;
-        color: #fff;
+        background: var(--accent-soft);
+        color: #1a1124;
       }
       .btn-secondary {
         background: transparent;
@@ -200,106 +268,133 @@
         color: var(--ink);
       }
 
-      /* Mockup */
-      .mockup {
+      /* Screenshot showcase — three real app screenshots crossfade in a loop
+         (ask → think → answer), 4s per frame, 0.6s overlap. */
+      .showcase {
+        position: relative;
         margin: 64px auto 0;
-        max-width: 920px;
-        background: var(--bg-elev);
-        border: 1px solid var(--border);
+        max-width: 1080px;
+        aspect-ratio: 1264 / 707;
         border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+        border: 1px solid var(--border);
+        box-shadow:
+          0 30px 80px -20px rgba(0, 0, 0, 0.7),
+          0 0 1px rgba(124, 77, 255, 0.35),
+          0 0 80px -10px rgba(124, 77, 255, 0.22);
+        background: var(--bg-elev);
       }
-      .mockup-bar {
+      .showcase img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        cursor: zoom-in;
+      }
+      .showcase img.active {
+        opacity: 1;
+      }
+      .showcase-steps {
         display: flex;
-        align-items: center;
+        justify-content: center;
         gap: 8px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border);
-        background: var(--bg-elev-2);
+        margin-top: 18px;
+        flex-wrap: wrap;
       }
-      .mockup-bar .dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #3a322c;
+      .showcase-steps .step {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink-faint);
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-family: var(--sans);
+        font-size: 16px;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          border-color 0.15s;
       }
-      .mockup-bar .dot:nth-child(1) {
-        background: #e15c54;
-      }
-      .mockup-bar .dot:nth-child(2) {
-        background: #d6a44a;
-      }
-      .mockup-bar .dot:nth-child(3) {
-        background: #6da965;
-      }
-      .mockup-bar .title {
-        margin-left: 12px;
+      .showcase-steps .step:hover {
         color: var(--ink-dim);
-        font-size: 13px;
+        border-color: var(--ink-faint);
       }
-      .mockup-body {
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        min-height: 360px;
+      .showcase-steps .step.active {
+        background: rgba(212, 172, 79, 0.12);
+        color: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 0 24px -4px rgba(212, 172, 79, 0.35);
       }
-      .panel {
-        padding: 20px;
-      }
-      .panel + .panel {
-        border-left: 1px solid var(--border);
-      }
-      .panel-label {
-        font-size: 11px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--ink-faint);
-        margin-bottom: 14px;
-      }
-      .bubble {
-        font-family: var(--mono);
-        font-size: 13px;
-        line-height: 1.55;
-        padding: 10px 14px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        background: var(--bg-elev-2);
-        border: 1px solid var(--border);
-        color: var(--ink);
-      }
-      .bubble .ts {
-        color: var(--ink-faint);
+      .showcase-steps .step .num {
+        font-family: var(--serif);
         margin-right: 8px;
-      }
-      .bubble.ja {
-        color: #f0e7d8;
-      }
-      .ai-card {
-        background: var(--bg-elev-2);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 14px;
-      }
-      .ai-card .who {
-        font-size: 12px;
-        color: var(--gold);
-        margin-bottom: 8px;
-        letter-spacing: 0.05em;
-      }
-      .ai-card p {
-        margin: 0 0 8px;
-        font-size: 13px;
-        color: var(--ink);
-        line-height: 1.55;
+        opacity: 0.7;
       }
 
-      @media (max-width: 760px) {
-        .mockup-body {
-          grid-template-columns: 1fr;
-        }
-        .panel + .panel {
-          border-left: 0;
-          border-top: 1px solid var(--border);
+      /* Modal / lightbox */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 7, 22, 0.92);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        z-index: 1000;
+        cursor: zoom-out;
+        animation: modal-fade-in 0.2s ease-out;
+      }
+      .modal[hidden] {
+        display: none;
+      }
+      .modal-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(124, 77, 255, 0.4),
+          0 0 80px -10px rgba(124, 77, 255, 0.3);
+        cursor: default;
+      }
+      .modal-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(15, 10, 30, 0.7);
+        color: var(--ink);
+        border: 1px solid var(--border);
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--sans);
+      }
+      .modal-close:hover {
+        background: rgba(30, 20, 50, 0.85);
+        border-color: var(--ink-faint);
+      }
+      @keyframes modal-fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .showcase img,
+        .modal {
+          transition: none;
+          animation: none;
         }
       }
 
@@ -312,6 +407,8 @@
         font-size: clamp(24px, 3.5vw, 34px);
         margin: 0 0 12px;
         letter-spacing: -0.01em;
+        line-height: 1.2;
+        text-wrap: balance;
       }
       section .lead {
         color: var(--ink-dim);
@@ -376,7 +473,7 @@
         padding: 18px 20px;
         overflow-x: auto;
         font-family: var(--mono);
-        font-size: 13px;
+        font-size: 14px;
         line-height: 1.7;
         color: var(--ink);
         margin: 0;
@@ -393,7 +490,7 @@
         padding: 40px 0 60px;
         border-top: 1px solid var(--border);
         color: var(--ink-faint);
-        font-size: 13px;
+        font-size: 14px;
         text-align: center;
       }
       footer a {
@@ -408,68 +505,60 @@
     <header>
       <div class="container">
         <div class="brand">
-          <span class="kanji">響</span>
+          <img class="brand-icon" src="app-icon.png" alt="" />
           <span class="name">Hibiki Codex</span>
         </div>
         <nav>
           <a href="#how">How it works</a>
           <a href="#setup">Setup</a>
-          <a href="https://github.com/BrunoLM/ai-transcribe-prompt">GitHub</a>
+          <a href="https://github.com/BrunoLM/hibiki-codex">GitHub</a>
         </nav>
       </div>
     </header>
 
     <section class="hero" style="border-top: 0">
       <div class="container">
+        <img class="hibiki-figure" src="hibiki.png" alt="" aria-hidden="true" />
         <div class="kanji-mark">響</div>
         <div class="pronounce">hi · bi · ki — echo, resonance</div>
-        <h1>A wise codex of what your computer just heard.</h1>
+        <h1>A wise codex of what your computer just heard</h1>
         <p class="tagline">
           Hibiki Codex captures your system audio, transcribes it locally with
           whisper.cpp in Japanese or English, and lets you ask Claude or Codex
           about what you've been hearing — all in one Windows desktop app.
         </p>
         <div class="cta">
-          <a class="btn btn-primary" href="https://github.com/BrunoLM/ai-transcribe-prompt"
+          <a class="btn btn-primary" href="https://github.com/BrunoLM/hibiki-codex"
             >View on GitHub →</a
           >
           <a class="btn btn-secondary" href="#setup">Get started</a>
         </div>
 
-        <div class="mockup" aria-hidden="true">
-          <div class="mockup-bar">
-            <span class="dot"></span><span class="dot"></span
-            ><span class="dot"></span>
-            <span class="title">Hibiki Codex — Chat</span>
-          </div>
-          <div class="mockup-body">
-            <div class="panel">
-              <div class="panel-label">Live transcript · ja</div>
-              <div class="bubble ja">
-                <span class="ts">14:02:11</span>今日のテーマは機械学習における正則化についてです。
-              </div>
-              <div class="bubble ja">
-                <span class="ts">14:02:24</span>過学習を防ぐための代表的な手法を見ていきましょう。
-              </div>
-              <div class="bubble ja">
-                <span class="ts">14:02:39</span>L1とL2、それぞれの違いを整理します。
-              </div>
-            </div>
-            <div class="panel">
-              <div class="panel-label">Ask the AI</div>
-              <div class="ai-card">
-                <div class="who">Claude · opus</div>
-                <p>
-                  L1 (Lasso) drives weights to exactly zero, producing sparse
-                  models good for feature selection.
-                </p>
-                <p>
-                  L2 (Ridge) shrinks weights smoothly toward zero, preferring
-                  many small weights over a few large ones.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div class="showcase" aria-label="Hibiki Codex screenshots: ask, think, answer">
+          <img
+            class="active"
+            src="example-1.png"
+            alt="Hibiki Codex with a Japanese Shadow Garden quote in the transcript and a prompt being typed"
+          />
+          <img
+            src="example-2.png"
+            alt="The same prompt sent to both Claude and Codex, both in 'thinking…' state"
+          />
+          <img
+            src="example-3.png"
+            alt="Both engines responding side by side with the romaji and translation of the quote"
+          />
+        </div>
+        <div class="showcase-steps" role="tablist" aria-label="Showcase steps">
+          <button class="step active" type="button" data-step="0" role="tab" aria-selected="true">
+            <span class="num">一</span>Ask
+          </button>
+          <button class="step" type="button" data-step="1" role="tab" aria-selected="false">
+            <span class="num">二</span>Think
+          </button>
+          <button class="step" type="button" data-step="2" role="tab" aria-selected="false">
+            <span class="num">三</span>Answer
+          </button>
         </div>
       </div>
     </section>
@@ -557,7 +646,7 @@ bun run dev</pre>
         <p style="margin-top: 24px; color: var(--ink-dim); font-size: 14px">
           Prefer a one-shot install? Paste the
           <a
-            href="https://github.com/BrunoLM/ai-transcribe-prompt#setup-with-ai"
+            href="https://github.com/BrunoLM/hibiki-codex#setup-with-ai"
             >Setup with AI</a
           >
           prompt from the README into Claude Code or Codex — it installs every
@@ -567,12 +656,92 @@ bun run dev</pre>
       </div>
     </section>
 
+    <div class="modal" hidden role="dialog" aria-modal="true" aria-label="Screenshot preview">
+      <button class="modal-close" type="button" aria-label="Close">×</button>
+      <img class="modal-img" src="" alt="" />
+    </div>
+
+    <script>
+      (() => {
+        const showcase = document.querySelector('.showcase');
+        if (!showcase) return;
+        const images = Array.from(showcase.querySelectorAll('img'));
+        const steps = Array.from(
+          document.querySelectorAll('.showcase-steps .step')
+        );
+        const modal = document.querySelector('.modal');
+        const modalImg = modal.querySelector('.modal-img');
+        const modalClose = modal.querySelector('.modal-close');
+
+        let current = 0;
+        let timer = null;
+        const INTERVAL_MS = 4500;
+
+        function setStep(i) {
+          current = (i + images.length) % images.length;
+          images.forEach((img, idx) =>
+            img.classList.toggle('active', idx === current)
+          );
+          steps.forEach((btn, idx) => {
+            const active = idx === current;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+        }
+
+        function startTimer() {
+          stopTimer();
+          timer = setInterval(() => setStep(current + 1), INTERVAL_MS);
+        }
+
+        function stopTimer() {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+        }
+
+        steps.forEach((btn, i) => {
+          btn.addEventListener('click', () => {
+            setStep(i);
+            startTimer(); // reset cadence after manual jump
+          });
+        });
+
+        // Modal
+        function openModal() {
+          modalImg.src = images[current].src;
+          modalImg.alt = images[current].alt;
+          modal.hidden = false;
+          document.body.style.overflow = 'hidden';
+          stopTimer();
+        }
+        function closeModal() {
+          modal.hidden = true;
+          document.body.style.overflow = '';
+          startTimer();
+        }
+        images.forEach((img) => img.addEventListener('click', openModal));
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+          // Close when clicking the backdrop (not the image itself)
+          if (e.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !modal.hidden) closeModal();
+        });
+
+        setStep(0);
+        startTimer();
+      })();
+    </script>
+
     <footer>
       <div class="container">
         <p>
           響 · Hibiki Codex · MIT-style hobby project ·
-          <a href="https://github.com/BrunoLM/ai-transcribe-prompt"
-            >github.com/BrunoLM/ai-transcribe-prompt</a
+          <a href="https://github.com/BrunoLM/hibiki-codex"
+            >github.com/BrunoLM/hibiki-codex</a
           >
         </p>
       </div>
