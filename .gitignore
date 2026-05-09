@@ -1,0 +1,33 @@
+node_modules/
+out/
+dist/
+.bun/
+
+# TypeScript
+*.tsbuildinfo
+
+# Rust
+native/target/
+native/index.node
+native/index.d.ts
+native/index.js
+native/*.node
+
+# Editor / OS / agent state
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Secrets / local overrides
+.env
+.env.*
+*.local.*
+
+# Whisper binaries + models (per README "Setup with AI" — multi-GB)
+tools/whisper/
