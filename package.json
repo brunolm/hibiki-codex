@@ -3,6 +3,19 @@
   "productName": "Hibiki Codex",
   "version": "0.0.1",
   "description": "Live system-audio transcription with an AI sidekick (Claude / Codex). hibikicodex.com",
+  "homepage": "https://hibikicodex.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brunolm/hibiki-codex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brunolm/hibiki-codex/issues"
+  },
+  "author": {
+    "name": "brunolm",
+    "email": "brunolm7@gmail.com",
+    "url": "https://github.com/brunolm"
+  },
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
