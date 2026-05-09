@@ -22,14 +22,14 @@
     <meta property="og:url" content="https://hibikicodex.com/" />
     <meta property="og:site_name" content="Hibiki Codex" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="https://hibikicodex.com/example-3.png" />
-    <meta property="og:image:secure_url" content="https://hibikicodex.com/example-3.png" />
+    <meta property="og:image" content="https://hibikicodex.com/opengraph.png" />
+    <meta property="og:image:secure_url" content="https://hibikicodex.com/opengraph.png" />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1264" />
-    <meta property="og:image:height" content="735" />
+    <meta property="og:image:width" content="1536" />
+    <meta property="og:image:height" content="1024" />
     <meta
       property="og:image:alt"
-      content="Hibiki Codex showing a Japanese transcript on the left and side-by-side Claude and Codex responses on the right"
+      content="Hibiki Codex card — title 'Hibiki Codex' and tagline 'Live system-audio transcription with an AI sidekick' over an illustration of Hibiki holding her glowing codex. Capture · Transcribe · Ask."
     />
 
     <!-- Twitter -->
@@ -41,10 +41,10 @@
       name="twitter:description"
       content="Capture system audio, transcribe it locally with whisper.cpp, and ask Claude or Codex what your computer just heard."
     />
-    <meta name="twitter:image" content="https://hibikicodex.com/example-3.png" />
+    <meta name="twitter:image" content="https://hibikicodex.com/opengraph.png" />
     <meta
       name="twitter:image:alt"
-      content="Hibiki Codex showing a Japanese transcript on the left and side-by-side Claude and Codex responses on the right"
+      content="Hibiki Codex card — title 'Hibiki Codex' and tagline 'Live system-audio transcription with an AI sidekick' over an illustration of Hibiki holding her glowing codex. Capture · Transcribe · Ask."
     />
 
     <meta name="theme-color" content="#0a0716" />
@@ -167,16 +167,25 @@
         box-shadow: 0 0 16px -2px rgba(124, 77, 255, 0.4);
       }
       .brand .name {
-        font-size: 22px;
+        font-size: 26px;
         line-height: 1.1;
       }
       nav a {
         margin-left: 28px;
         color: var(--ink-dim);
         font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
       }
       nav a:hover {
         color: var(--ink);
+      }
+      nav a.icon-link svg {
+        width: 22px;
+        height: 22px;
+        display: block;
+        fill: currentColor;
       }
 
       /* Hero */
@@ -443,7 +452,6 @@
       }
       section .lead {
         color: var(--ink-dim);
-        max-width: 640px;
         margin: 0 0 48px;
       }
       .grid-3 {
@@ -468,6 +476,71 @@
         font-size: 22px;
         margin-bottom: 10px;
         line-height: 1;
+      }
+
+      /* Platform support cards */
+      .platform-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .platform-head h3 {
+        margin: 0;
+      }
+      .status {
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 4px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .status-ok {
+        background: rgba(212, 172, 79, 0.16);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+      .status-maybe {
+        background: rgba(108, 94, 140, 0.12);
+        color: var(--ink-faint);
+        border: 1px dashed var(--ink-faint);
+      }
+      .card.platform.maybe {
+        opacity: 0.85;
+      }
+
+      /* Requires callout */
+      .requires {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 16px 20px;
+        margin: 0 0 24px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: var(--radius);
+        background: rgba(212, 172, 79, 0.05);
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .requires-label {
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        white-space: nowrap;
+        padding-top: 2px;
+      }
+      .requires p {
+        margin: 0;
+        color: var(--ink-dim);
+      }
+      .requires p + p {
+        margin-top: 6px;
       }
       .card h3 {
         margin: 0 0 8px;
@@ -542,7 +615,16 @@
         <nav>
           <a href="#how">How it works</a>
           <a href="#setup">Setup</a>
-          <a href="https://github.com/BrunoLM/hibiki-codex">GitHub</a>
+          <a
+            class="icon-link"
+            href="https://github.com/BrunoLM/hibiki-codex"
+            aria-label="GitHub repository"
+            title="GitHub"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+            </svg>
+          </a>
         </nav>
       </div>
     </header>
@@ -652,6 +734,48 @@
       </div>
     </section>
 
+    <section id="platforms">
+      <div class="container">
+        <h2>Where it runs</h2>
+        <p class="lead">
+          Built around Windows-specific audio capture today. Linux and macOS
+          ports are plausible but unproven — contributions welcome.
+        </p>
+        <div class="grid-3">
+          <div class="card platform">
+            <div class="platform-head">
+              <h3>Windows</h3>
+              <span class="status status-ok">Supported</span>
+            </div>
+            <p>
+              Built around WASAPI loopback and PowerShell 7+. Tested on
+              Windows 11.
+            </p>
+          </div>
+          <div class="card platform maybe">
+            <div class="platform-head">
+              <h3>Linux</h3>
+              <span class="status status-maybe">Maybe</span>
+            </div>
+            <p>
+              Audio capture would need to swap WASAPI for PulseAudio or
+              PipeWire. Everything else should port cleanly.
+            </p>
+          </div>
+          <div class="card platform maybe">
+            <div class="platform-head">
+              <h3>macOS</h3>
+              <span class="status status-maybe">Maybe</span>
+            </div>
+            <p>
+              System-audio loopback needs a driver like BlackHole or Soundflower.
+              Not yet attempted.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="setup">
       <div class="container">
         <h2>Get started.</h2>
@@ -660,6 +784,25 @@
           versions are pinned in <code>mise.toml</code>, so setup is three
           commands.
         </p>
+        <div class="requires">
+          <span class="requires-label">Requires</span>
+          <div>
+            <p>
+              At least one AI CLI on your <code>PATH</code> — pick the one
+              you'll use most (you can install both):
+            </p>
+            <p>
+              <a href="https://www.claude.com/product/claude-code"><strong>Claude Code</strong></a>
+              (<code>claude -p</code>) — Anthropic's official CLI.
+              Install: <code>npm install -g @anthropic-ai/claude-code</code>.
+            </p>
+            <p>
+              <a href="https://github.com/openai/codex"><strong>OpenAI Codex CLI</strong></a>
+              (<code>codex exec</code>) — OpenAI's official CLI.
+              Install: <code>npm install -g @openai/codex</code>.
+            </p>
+          </div>
+        </div>
         <pre><span class="c"># 1. Install mise (one-time)</span>
 winget install jdx.mise
 
