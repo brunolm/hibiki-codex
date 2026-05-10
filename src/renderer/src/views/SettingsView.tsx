@@ -37,7 +37,7 @@ const DEFAULTS: Settings = {
   whisperExe: '',
   whisperModel: '',
   whisperVadModel: '',
-  whisperLanguage: 'ja',
+  whisperLanguage: 'auto',
   whisperThreads: 4,
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
@@ -283,9 +283,15 @@ export function SettingsView({
                     )
                   }
                 >
+                  <option value="auto">Auto-detect</option>
                   <option value="ja">Japanese (ja)</option>
                   <option value="en">English (en)</option>
                 </select>
+                <small>
+                  Auto-detect adds latency and can be unreliable on short audio
+                  chunks. Single-language-tuned models (Anime Whisper, Kotoba
+                  Whisper, *.en) ignore this.
+                </small>
               </label>
 
               <div className="grid">

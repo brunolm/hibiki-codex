@@ -9,7 +9,7 @@ import {
 import { dirname, join } from 'node:path'
 
 export type Engine = 'claude' | 'codex'
-export type Language = 'en' | 'ja'
+export type Language = 'auto' | 'en' | 'ja'
 
 export type Settings = {
   whisperExe: string
@@ -43,7 +43,7 @@ const defaults: Settings = {
   whisperExe: '',
   whisperModel: '',
   whisperVadModel: '',
-  whisperLanguage: 'ja',
+  whisperLanguage: 'auto',
   whisperThreads: 4,
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,

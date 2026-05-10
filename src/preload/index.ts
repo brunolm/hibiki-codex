@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 export type Engine = 'claude' | 'codex'
-export type Language = 'en' | 'ja'
+export type Language = 'auto' | 'en' | 'ja'
 
 export type Settings = {
   whisperExe: string
