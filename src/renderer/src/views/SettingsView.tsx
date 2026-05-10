@@ -23,6 +23,7 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'whisperVadModel',
     'whisperLanguage',
     'whisperThreads',
+    'transcribeMaxLanes',
     'transcribeIntervalSeconds',
     'audioBufferSeconds'
   ],
@@ -39,6 +40,7 @@ const DEFAULTS: Settings = {
   whisperVadModel: '',
   whisperLanguage: 'auto',
   whisperThreads: 4,
+  transcribeMaxLanes: 2,
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
   aiEngines: ['claude'],
@@ -317,6 +319,29 @@ export function SettingsView({
                     value={draft.whisperThreads}
                     onChange={(e) =>
                       set('whisperThreads', Number(e.target.value))
+                    }
+                  />
+                </label>
+
+                <label>
+                  <span>
+                    Parallel lanes
+                    <span
+                      className="help-icon"
+                      role="img"
+                      aria-label="help"
+                      title="How many whisper-cli inferences can run at once. With a fast model, 1 is plenty. If transcription falls behind the interval (e.g. on a slow CPU + large model), raise this so a new chunk can start while the previous one finishes. Peak CPU = lanes × Whisper threads."
+                    >
+                      ?
+                    </span>
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={8}
+                    value={draft.transcribeMaxLanes}
+                    onChange={(e) =>
+                      set('transcribeMaxLanes', Number(e.target.value))
                     }
                   />
                 </label>

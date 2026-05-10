@@ -24,6 +24,10 @@ export type Settings = {
   whisperVadModel: string
   whisperLanguage: Language
   whisperThreads: number
+  // Max concurrent whisper-cli inferences. >1 lets a new tick start while
+  // the previous one is still running; peak CPU = transcribeMaxLanes ×
+  // whisperThreads. 1 = strictly serial.
+  transcribeMaxLanes: number
   transcribeIntervalSeconds: number
   audioBufferSeconds: number
   // Engines to run when a prompt is submitted. At least one.
@@ -57,6 +61,7 @@ const defaults: Settings = {
   whisperVadModel: '',
   whisperLanguage: 'auto',
   whisperThreads: 4,
+  transcribeMaxLanes: 2,
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
   aiEngines: ['claude'],

@@ -9,6 +9,7 @@ export type Settings = {
   whisperVadModel: string
   whisperLanguage: Language
   whisperThreads: number
+  transcribeMaxLanes: number
   transcribeIntervalSeconds: number
   audioBufferSeconds: number
   aiEngines: Engine[]
