@@ -477,6 +477,74 @@
         line-height: 1;
       }
 
+      /* Use case cards — two-up grid, screenshot above + caption */
+      .usecases {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+      @media (max-width: 760px) {
+        .usecases {
+          grid-template-columns: 1fr;
+        }
+      }
+      .usecase {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+      }
+      .usecase:hover {
+        border-color: rgba(212, 172, 79, 0.55);
+        box-shadow:
+          0 12px 32px -16px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(212, 172, 79, 0.18),
+          0 0 40px -8px rgba(124, 77, 255, 0.18);
+        transform: translateY(-2px);
+      }
+      .usecase-image {
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        aspect-ratio: 16 / 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .usecase-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        cursor: zoom-in;
+        display: block;
+      }
+      .usecase-body {
+        padding: 22px 24px;
+      }
+      .usecase-body .tag {
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .usecase-body h3 {
+        margin: 0 0 8px;
+        font-size: 19px;
+        line-height: 1.3;
+      }
+      .usecase-body p {
+        margin: 0;
+        color: var(--ink-dim);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
       /* Platform support cards */
       .platform-head {
         display: flex;
@@ -613,6 +681,7 @@
         </div>
         <nav>
           <a href="#how">How it works</a>
+          <a href="#use-cases">Use cases</a>
           <a href="#setup">Setup</a>
           <a
             class="icon-link"
@@ -710,6 +779,97 @@
               transcript is attached as context automatically.
             </p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="use-cases">
+      <div class="container">
+        <h2>What people use it for.</h2>
+        <p class="lead">
+          Anything your computer plays, Hibiki can transcribe and pull context
+          from. Two flows that come up a lot:
+        </p>
+        <div class="usecases">
+          <!-- TODO: replace each use-case image with a tailored screenshot.
+               Until then, the missing files fall back to example-1.png so
+               every card stays clickable and the modal works end-to-end. -->
+          <article class="usecase">
+            <div class="usecase-image">
+              <img
+                src="example-quote.png"
+                alt="An anime quote is captured in the transcript; the AI panel breaks down the grammar, romaji, and translation."
+                onerror="this.onerror=null; this.src='example-1.png';"
+              />
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Anime · VN · drama</div>
+              <h3>Decode a Japanese line on the fly</h3>
+              <p>
+                Pause a scene, let Hibiki transcribe the line that just played,
+                then ask Claude or Codex to break it down — kanji reading,
+                grammar, idiom, cultural context. No browser tab, no copy-paste
+                across three sites.
+              </p>
+            </div>
+          </article>
+          <article class="usecase">
+            <div class="usecase-image">
+              <img
+                src="example-factcheck.png"
+                alt="A streamer's claim appears in the transcript; the AI panel verifies it with corroborating details."
+                onerror="this.onerror=null; this.src='example-2.png';"
+              />
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Streams · podcasts · news</div>
+              <h3>Fact-check what a streamer just said</h3>
+              <p>
+                Hear a confident claim about a date, a stat, or a feature? Ask
+                Hibiki — the most recent transcript lines come along as
+                context, so the AI knows exactly what was said and can call
+                out whether it holds up.
+              </p>
+            </div>
+          </article>
+          <article class="usecase">
+            <div class="usecase-image">
+              <img
+                src="example-meetings.png"
+                alt="A meeting transcript scrolls past while the AI panel summarises action items and decisions."
+                onerror="this.onerror=null; this.src='example-3.png';"
+              />
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Standups · 1:1s · client calls</div>
+              <h3>Catch up on a meeting you half-heard</h3>
+              <p>
+                Hibiki captures the call from your default playback device.
+                Ask "what did we decide about X?" or "list the action items"
+                and the AI answers from the live transcript — no recording
+                to scrub through, no separate note-taker.
+              </p>
+            </div>
+          </article>
+          <article class="usecase">
+            <div class="usecase-image">
+              <img
+                src="example-techtalks.png"
+                alt="A tech talk plays; the transcript captures a technical claim and the AI panel expands on it with a deeper explanation."
+                onerror="this.onerror=null; this.src='example-1.png';"
+              />
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Conferences · tutorials · lectures</div>
+              <h3>Follow a tech talk without taking notes</h3>
+              <p>
+                When the speaker drops a term you don't know, ask the AI for a
+                definition or a quick recap of the last few minutes. The
+                recent transcript travels with the prompt, so the answer
+                lands in the same context the talk is in.
+              </p>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -895,9 +1055,9 @@ bun run dev</pre>
         });
 
         // Modal
-        function openModal() {
-          modalImg.src = images[current].src;
-          modalImg.alt = images[current].alt;
+        function openModal(src, alt) {
+          modalImg.src = src;
+          modalImg.alt = alt || '';
           modal.hidden = false;
           document.body.style.overflow = 'hidden';
           stopTimer();
@@ -907,7 +1067,14 @@ bun run dev</pre>
           document.body.style.overflow = '';
           startTimer();
         }
-        images.forEach((img) => img.addEventListener('click', openModal));
+        images.forEach((img) =>
+          img.addEventListener('click', () => openModal(img.src, img.alt))
+        );
+        document
+          .querySelectorAll('.usecase-image img')
+          .forEach((img) =>
+            img.addEventListener('click', () => openModal(img.src, img.alt))
+          );
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
           // Close when clicking the backdrop (not the image itself)
