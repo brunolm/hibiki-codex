@@ -152,6 +152,31 @@ textarea {
   gap: 0.35rem;
 }
 
+.pin-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 120ms, background 120ms, border-color 120ms;
+}
+.pin-toggle:hover {
+  color: var(--text);
+  background: var(--bg-elev-2);
+}
+.pin-toggle.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
 .engine-icon {
   display: inline-block;
   flex-shrink: 0;

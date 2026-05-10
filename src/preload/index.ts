@@ -20,6 +20,14 @@ export type Settings = {
   wslDetectionDone: boolean
   aiPaneWidth: number
   transcriptContextMessages: number
+  windowBounds: {
+    x: number
+    y: number
+    width: number
+    height: number
+  } | null
+  windowMaximized: boolean
+  alwaysOnTop: boolean
 }
 
 export type EngineDetection = { windows: boolean; wsl: boolean }
@@ -160,7 +168,11 @@ const api = {
       return () => ipcRenderer.off('install:log', fn)
     }
   },
-  platform: process.platform as NodeJS.Platform
+  platform: process.platform as NodeJS.Platform,
+  window: {
+    setAlwaysOnTop: (on: boolean): Promise<void> =>
+      ipcRenderer.invoke('window:setAlwaysOnTop', on)
+  }
 }
 
 contextBridge.exposeInMainWorld('api', api)

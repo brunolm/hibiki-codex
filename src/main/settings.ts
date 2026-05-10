@@ -47,6 +47,8 @@ export type Settings = {
   // Persisted window geometry. null = use defaults (centered, 1280x800).
   windowBounds: WindowBounds | null
   windowMaximized: boolean
+  // Keep the window above all other windows (pin-on-top).
+  alwaysOnTop: boolean
 }
 
 const defaults: Settings = {
@@ -67,7 +69,8 @@ const defaults: Settings = {
   aiPaneWidth: 480,
   transcriptContextMessages: 50,
   windowBounds: null,
-  windowMaximized: false
+  windowMaximized: false,
+  alwaysOnTop: false
 }
 
 let filePath = ''

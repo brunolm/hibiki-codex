@@ -49,7 +49,10 @@ const DEFAULTS: Settings = {
   codexUseWsl: false,
   wslDetectionDone: false,
   aiPaneWidth: 480,
-  transcriptContextMessages: 50
+  transcriptContextMessages: 50,
+  windowBounds: null,
+  windowMaximized: false,
+  alwaysOnTop: false
 }
 
 function copyTabFields(from: Settings, into: Settings, t: Tab): Settings {

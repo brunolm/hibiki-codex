@@ -49,6 +49,12 @@ export function App(): JSX.Element {
     setDetectedEngines(next)
   }
 
+  async function toggleAlwaysOnTop(): Promise<void> {
+    const next = !(settings?.alwaysOnTop ?? false)
+    await window.api.window.setAlwaysOnTop(next)
+    if (settings) setSettings({ ...settings, alwaysOnTop: next })
+  }
+
   // The warmup window can be near-instant on warm caches, which makes the
   // splash flicker. Hold the warming=true display for at least 3s so the
   // user actually registers the state change.
@@ -277,6 +283,33 @@ export function App(): JSX.Element {
               <span>· {settings.whisperLanguage}</span>
             </span>
           )}
+          <button
+            type="button"
+            className={`pin-toggle${settings?.alwaysOnTop ? ' active' : ''}`}
+            onClick={() => void toggleAlwaysOnTop()}
+            aria-pressed={settings?.alwaysOnTop ?? false}
+            title={
+              settings?.alwaysOnTop
+                ? 'Unpin: stop floating above other windows'
+                : 'Pin on top: keep this window above other windows'
+            }
+            aria-label="Pin window on top"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill={settings?.alwaysOnTop ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 17v5" />
+              <path d="M9 10.76V4h6v6.76a2 2 0 0 0 .553 1.382l1.235 1.298A2 2 0 0 1 17.382 17H6.618a2 2 0 0 1-1.406-3.56l1.235-1.298A2 2 0 0 0 7 10.76" />
+            </svg>
+          </button>
         </div>
       </header>
 

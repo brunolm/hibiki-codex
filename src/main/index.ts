@@ -106,6 +106,10 @@ function createWindow(): void {
     mainWindow.maximize()
   }
 
+  if (s.alwaysOnTop) {
+    mainWindow.setAlwaysOnTop(true)
+  }
+
   if (process.env['ELECTRON_RENDERER_URL']) {
     void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
     mainWindow.webContents.openDevTools({ mode: 'detach' })
@@ -152,6 +156,13 @@ ipcMain.handle('settings:get', () => settings.get())
 ipcMain.handle('settings:save', (_e, next: Partial<settings.Settings>) =>
   settings.update(next)
 )
+
+ipcMain.handle('window:setAlwaysOnTop', (_e, on: boolean) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setAlwaysOnTop(on)
+  }
+  settings.update({ alwaysOnTop: on })
+})
 
 ipcMain.handle(
   'dialog:pickFile',
