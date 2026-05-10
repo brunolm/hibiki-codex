@@ -167,6 +167,7 @@ bun run typecheck
 | VAD model | Optional. Empty → falls back to the bundled Silero VAD. |
 | Language | `auto` (default), `ja`, `en`. Auto-detect adds a little latency. |
 | Whisper threads | Match your fast cores (default 4). |
+| Parallel lanes | Concurrent whisper-cli inferences (default 2, max 8). >1 lets a new chunk start while the previous one finishes — useful when inference > interval. Peak CPU = lanes × threads. |
 | Transcribe interval (s) | Lower = lower latency, more CPU. |
 | Audio buffer (s) | Rolling buffer length. |
 
@@ -193,3 +194,12 @@ bun run typecheck
 - **Save** persists the draft. **Cancel** reverts every tab's unsaved
   changes. **Reset to defaults** asks for confirmation and only resets the
   *current* tab's fields.
+
+## Topbar
+
+- **Pin on top** (📌 button on the right): toggles
+  `BrowserWindow.setAlwaysOnTop` so the app floats above other windows.
+  State persists across launches.
+- The app **remembers its size and position** between launches. If the
+  saved position would leave less than 5% of the window visible (e.g. a
+  monitor was unplugged), it falls back to centered defaults.
