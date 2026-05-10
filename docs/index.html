@@ -545,6 +545,70 @@
         line-height: 1.55;
       }
 
+      /* Configure-step cards — narrower grid, numbered, screenshot on top */
+      .configure {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+      .config-card {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+      }
+      .config-card:hover {
+        border-color: rgba(212, 172, 79, 0.55);
+        box-shadow:
+          0 10px 28px -16px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(212, 172, 79, 0.18),
+          0 0 30px -8px rgba(124, 77, 255, 0.18);
+        transform: translateY(-2px);
+      }
+      .config-image {
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        aspect-ratio: 16 / 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .config-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        cursor: zoom-in;
+        display: block;
+      }
+      .config-body {
+        padding: 16px 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .config-body .step-num {
+        font-family: var(--serif);
+        color: var(--accent);
+        font-size: 22px;
+        line-height: 1;
+      }
+      .config-body h3 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+      .config-body p {
+        margin: 0;
+        color: var(--ink-dim);
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+
       /* Platform support cards */
       .platform-head {
         display: flex;
@@ -682,6 +746,7 @@
         <nav>
           <a href="#how">How it works</a>
           <a href="#use-cases">Use cases</a>
+          <a href="#configure">Configure</a>
           <a href="#setup">Setup</a>
           <a
             class="icon-link"
@@ -867,6 +932,96 @@
                 definition or a quick recap of the last few minutes. The
                 recent transcript travels with the prompt, so the answer
                 lands in the same context the talk is in.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="configure">
+      <div class="container">
+        <h2>How to configure.</h2>
+        <p class="lead">
+          Hibiki ships with no whisper-cli, no model, no AI CLI — every
+          piece is something you pick. Four steps inside Settings get you
+          to a working transcript.
+        </p>
+        <div class="configure">
+          <!-- TODO: replace each config-image with a real settings screenshot.
+               Until then the missing files fall back to example-1/2/3.png so
+               every card stays clickable and the modal works end-to-end. -->
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-runtime.png"
+                alt="Settings → Whisper → Whisper executable → Download… opens a chooser with four whisper-cli variants."
+                onerror="this.onerror=null; this.src='example-1.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">一</div>
+              <h3>Download whisper-cli</h3>
+              <p>
+                Settings → Whisper → <strong>Download…</strong> opens a
+                variant chooser. NVIDIA GPU? Pick CUDA 12.4 (recommended).
+                Otherwise CPU. Installs into the app's data folder.
+              </p>
+            </div>
+          </article>
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-model.png"
+                alt="Whisper model Download… modal showing the curated catalog of GGML models with sizes and recommended badges."
+                onerror="this.onerror=null; this.src='example-2.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">二</div>
+              <h3>Download a model</h3>
+              <p>
+                Same idea for the GGML model — pick one from the curated
+                catalog (Large v3 Turbo q8_0 is recommended for Japanese).
+                Already-installed entries show an "installed" badge so you
+                can re-use them.
+              </p>
+            </div>
+          </article>
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-engines.png"
+                alt="Claude tab showing detection tags for Windows and WSL, a Use WSL checkbox, and the winget install panel."
+                onerror="this.onerror=null; this.src='example-3.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">三</div>
+              <h3>Wire up Claude / Codex</h3>
+              <p>
+                The Claude and Codex tabs auto-detect whether each CLI is on
+                PATH or in WSL. Missing on Windows? One click runs
+                <code>winget install Anthropic.ClaudeCode</code> and streams
+                the log live.
+              </p>
+            </div>
+          </article>
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-start.png"
+                alt="Chat view with the Start button highlighted, a transcript line appearing, and an AI response panel on the right."
+                onerror="this.onerror=null; this.src='example-1.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">四</div>
+              <h3>Press Start</h3>
+              <p>
+                Save, head to Chat, hit Start. Play some audio — transcript
+                lines stream in. Type a prompt, hit Enter, and the recent
+                transcript rides along to whichever engine(s) you picked.
               </p>
             </div>
           </article>
@@ -1071,7 +1226,7 @@ bun run dev</pre>
           img.addEventListener('click', () => openModal(img.src, img.alt))
         );
         document
-          .querySelectorAll('.usecase-image img')
+          .querySelectorAll('.usecase-image img, .config-image img')
           .forEach((img) =>
             img.addEventListener('click', () => openModal(img.src, img.alt))
           );
