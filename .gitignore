@@ -31,3 +31,7 @@ npm-debug.log*
 
 # Whisper binaries + models (per README "Setup with AI" — multi-GB)
 tools/whisper/
+resources/whisper/
+
+# Patchright MCP screenshots
+.playwright-mcp/
