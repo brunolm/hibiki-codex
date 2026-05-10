@@ -72,11 +72,15 @@ installed, and verify each step before moving on.
      mise install
    Verify with `mise exec -- bun --version` and `mise exec -- cargo --version`.
 
-3. Install at least one AI CLI on PATH (skip whichever ones are already there):
+3. Install at least one AI CLI (skip whichever ones are already there).
+   Either Windows-side on PATH, or inside the default WSL distro — the app
+   detects both and offers a "Use WSL" toggle per engine.
    - Claude Code:   npm install -g @anthropic-ai/claude-code
-                    (or `winget install Anthropic.ClaudeCode` — the app can
-                     also run this for you from Settings → Claude → Install.)
-   - OpenAI Codex:  npm install -g @openai/codex
+                    (Windows-only alternative: leave it missing here; the
+                    app's Settings → Claude tab will offer a one-click
+                    `winget install Anthropic.ClaudeCode` button when the
+                    user opens it.)
+   - OpenAI Codex:  npm install -g @openai/codex   (no in-app installer)
    Verify with `claude --version` and/or `codex --version`.
 
 4. Install JS deps and build the Rust native module (run inside `mise exec --`
@@ -84,21 +88,32 @@ installed, and verify each step before moving on.
      bun install
      bun install --cwd native
      bun run build:rust
+   Note: `bun install` does not fetch any whisper artifacts. `bun run dev`
+   and `bun run build` are chained with `node scripts/fetch-whisper.mjs`,
+   which downloads the bundled Silero VAD (~885 KB) into
+   `resources/whisper/` if it isn't there yet. That fetch is idempotent.
 
 5. Verify the build:
      bun run typecheck
 
-6. Do NOT fetch whisper-cli or any GGML model. The app downloads both from
-   Settings on first launch:
-   - Settings → Whisper → Whisper executable → "Download…" picks a variant
-     (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4) and installs it into the app's
-     userData folder.
+6. Do NOT fetch `whisper-cli.exe` or any GGML model manually. The app
+   downloads both from Settings on first launch:
+   - Settings → Whisper → Whisper executable → "Download…" opens a chooser
+     of four pinned whisper.cpp v1.8.4 variants — CPU (4 MB, ~2 GB RAM at
+     inference), OpenBLAS (17 MB), CUDA 11.8 (59 MB), CUDA 12.4 (457 MB,
+     recommended for NVIDIA GPUs because it drops system RAM to ~200 MB).
+     Installs into `%APPDATA%\Hibiki Codex\whisper-runtime\<variant>\`.
    - Settings → Whisper → Whisper model → "Download…" picks from a curated
-     catalog (Tiny / Base / Small / Large v3 Turbo / Anime Whisper / Kotoba
-     Whisper / *.en) and saves into <userData>/models/.
+     catalog: Tiny / Base / Small / **Large v3 Turbo (q8_0) — recommended**
+     / Large v3 Turbo / Large v3 / Anime Whisper (q5_k) / Anime Whisper /
+     Kotoba Whisper v2.0 / Base.en / Small.en. Saved into
+     `%APPDATA%\Hibiki Codex\models\`. Already-installed entries show an
+     "installed" badge; the modal lets the user pick "Use existing" or
+     "Re-download".
 
 Report a short summary at the end: versions of bun / cargo / pwsh, which AI
-CLIs you installed. Do not start the dev server.
+CLIs you installed, and whether they're on Windows PATH or in WSL. Do not
+start the dev server.
 ```
 
 ## Setup
@@ -194,6 +209,20 @@ bun run typecheck
 - **Save** persists the draft. **Cancel** reverts every tab's unsaved
   changes. **Reset to defaults** asks for confirmation and only resets the
   *current* tab's fields.
+
+## Chat view
+
+The Chat view's composer has two persisted controls that don't live in the
+Settings tab:
+
+| Control | Notes |
+|---------|------|
+| Engine picker | Toggle Claude and Codex on/off. At least one stays selected. With both on, every prompt fans out and lands as a card per engine. Persists as `aiEngines` in settings.json. |
+| Context | Latest N transcript messages sent along with the prompt (and highlighted in the live transcript). 0 = no context, 50 by default. Persists as `transcriptContextMessages` in settings.json. |
+
+The **Send** button auto-disables with a context-specific tooltip when the
+Whisper executable, Whisper model, or all selected AI engines are missing
+— the same conditions that make the Settings tab glow.
 
 ## Topbar
 
