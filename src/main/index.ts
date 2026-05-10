@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -48,12 +48,51 @@ function resolveAppIcon(): string {
     : join(__dirname, '..', '..', 'resources', 'app-icon.png')
 }
 
+const DEFAULT_WIDTH = 1280
+const DEFAULT_HEIGHT = 800
+const MIN_WIDTH = 900
+const MIN_HEIGHT = 600
+
+// True if at least 5% of the proposed window rect lands inside the work area
+// of *some* connected display. Sum intersections across all displays so a
+// window straddling two monitors still counts.
+function isMostlyOnScreen(bounds: settings.WindowBounds): boolean {
+  const totalArea = bounds.width * bounds.height
+  if (totalArea <= 0) return false
+  let visible = 0
+  for (const d of screen.getAllDisplays()) {
+    const w = d.workArea
+    const ix = Math.max(
+      0,
+      Math.min(bounds.x + bounds.width, w.x + w.width) -
+        Math.max(bounds.x, w.x)
+    )
+    const iy = Math.max(
+      0,
+      Math.min(bounds.y + bounds.height, w.y + w.height) -
+        Math.max(bounds.y, w.y)
+    )
+    visible += ix * iy
+  }
+  return visible / totalArea >= 0.05
+}
+
 function createWindow(): void {
+  const s = settings.get()
+  const saved = s.windowBounds
+  const useSaved =
+    saved !== null &&
+    saved.width >= MIN_WIDTH &&
+    saved.height >= MIN_HEIGHT &&
+    isMostlyOnScreen(saved)
+
+  // Omit x/y when no usable saved position so Electron centers the window.
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
+    width: useSaved ? saved.width : DEFAULT_WIDTH,
+    height: useSaved ? saved.height : DEFAULT_HEIGHT,
+    ...(useSaved ? { x: saved.x, y: saved.y } : {}),
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
     icon: resolveAppIcon(),
     webPreferences: {
       preload: join(__dirname, '..', 'preload', 'index.js'),
@@ -63,12 +102,35 @@ function createWindow(): void {
     }
   })
 
+  if (useSaved && s.windowMaximized) {
+    mainWindow.maximize()
+  }
+
   if (process.env['ELECTRON_RENDERER_URL']) {
     void mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   } else {
     void mainWindow.loadFile(join(__dirname, '..', 'renderer', 'index.html'))
   }
+
+  // Persist geometry on close. Use getNormalBounds() so a window that was
+  // maximized when the user quit still restores its previous restored size
+  // next time, not the screen-filling bounds.
+  mainWindow.on('close', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    if (mainWindow.isMinimized()) return
+    try {
+      const maximized = mainWindow.isMaximized()
+      const b = mainWindow.getNormalBounds()
+      settings.update({
+        windowBounds: { x: b.x, y: b.y, width: b.width, height: b.height },
+        windowMaximized: maximized
+      })
+    } catch {
+      // Best-effort: window may be in an odd state at close time on some
+      // platforms. Don't block the close on it.
+    }
+  })
 
   mainWindow.on('closed', () => {
     mainWindow = null

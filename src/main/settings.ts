@@ -11,6 +11,13 @@ import { dirname, join } from 'node:path'
 export type Engine = 'claude' | 'codex'
 export type Language = 'auto' | 'en' | 'ja'
 
+export type WindowBounds = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export type Settings = {
   whisperExe: string
   whisperModel: string
@@ -37,6 +44,9 @@ export type Settings = {
   // How many latest transcript messages to include as context when sending
   // a prompt to the AI engine.
   transcriptContextMessages: number
+  // Persisted window geometry. null = use defaults (centered, 1280x800).
+  windowBounds: WindowBounds | null
+  windowMaximized: boolean
 }
 
 const defaults: Settings = {
@@ -55,7 +65,9 @@ const defaults: Settings = {
   codexUseWsl: false,
   wslDetectionDone: false,
   aiPaneWidth: 480,
-  transcriptContextMessages: 50
+  transcriptContextMessages: 50,
+  windowBounds: null,
+  windowMaximized: false
 }
 
 let filePath = ''
