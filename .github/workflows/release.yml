@@ -45,9 +45,10 @@ jobs:
       - name: Package with electron-builder
         env:
           # Stop electron-builder from trying to publish — we handle the
-          # GitHub release ourselves below.
+          # GitHub release ourselves below. (bun puts node_modules/.bin on
+          # PATH when running scripts, so electron-builder resolves locally.)
           GH_TOKEN: ""
-        run: bunx --bun electron-builder --win --publish never
+        run: bun run package:win
 
       - name: Read version + short SHA
         id: meta
