@@ -6,7 +6,7 @@
     <title>Hibiki Codex — live system-audio transcription with an AI sidekick</title>
     <meta
       name="description"
-      content="A Windows desktop app that captures system audio, transcribes it locally with whisper.cpp, and lets you ask Claude or Codex about what you've been hearing."
+      content="A Windows desktop app that captures system audio, transcribes it locally with whisper.cpp (auto / Japanese / English), and lets you ask Claude or Codex about what you've been hearing. Whisper runtime + model downloaded in-app."
     />
     <link rel="icon" type="image/png" href="app-icon.png" />
     <link rel="apple-touch-icon" href="app-icon.png" />
@@ -636,8 +636,10 @@
         <h1>A wise codex of what your computer just heard</h1>
         <p class="tagline">
           Hibiki Codex captures your system audio, transcribes it locally with
-          whisper.cpp in Japanese or English, and lets you ask Claude or Codex
-          about what you've been hearing — all in one Windows desktop app.
+          whisper.cpp (auto-detect, Japanese, or English), and lets you ask
+          Claude or Codex about what you've been hearing — all in one Windows
+          desktop app. Whisper runtime + model are downloaded in-app on first
+          launch.
         </p>
         <div class="cta">
           <a class="btn btn-primary" href="https://github.com/BrunoLM/hibiki-codex"
@@ -696,7 +698,8 @@
             <h3>Transcribe</h3>
             <p>
               whisper.cpp runs locally with a rolling buffer, streaming
-              chat-style transcript lines in Japanese or English.
+              chat-style transcript lines. Auto-detect language, or pin to
+              Japanese or English.
             </p>
           </div>
           <div class="card">
@@ -787,18 +790,26 @@
           <span class="requires-label">Requires</span>
           <div>
             <p>
-              At least one AI CLI on your <code>PATH</code> — pick the one
-              you'll use most (you can install both):
+              At least one AI CLI on your <code>PATH</code> (or inside WSL —
+              the app detects both and offers a "Use WSL" toggle per engine):
             </p>
             <p>
               <a href="https://www.claude.com/product/claude-code"><strong>Claude Code</strong></a>
-              (<code>claude -p</code>) — Anthropic's official CLI.
-              Install: <code>npm install -g @anthropic-ai/claude-code</code>.
+              (<code>claude -p</code>) — install with
+              <code>npm install -g @anthropic-ai/claude-code</code> or
+              <code>winget install Anthropic.ClaudeCode</code>. The Settings
+              page can run the winget install for you when it isn't detected.
             </p>
             <p>
               <a href="https://github.com/openai/codex"><strong>OpenAI Codex CLI</strong></a>
-              (<code>codex exec</code>) — OpenAI's official CLI.
-              Install: <code>npm install -g @openai/codex</code>.
+              (<code>codex exec</code>) — install with
+              <code>npm install -g @openai/codex</code>.
+            </p>
+            <p>
+              <strong>whisper-cli + a GGML model:</strong> downloaded from
+              inside the app — Settings → Whisper → <em>Download…</em>. Pick a
+              runtime variant (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4) and a
+              model from the curated catalog.
             </p>
           </div>
         </div>
@@ -814,7 +825,9 @@ bun install
 bun install --cwd native
 bun run build:rust
 
-<span class="c"># Then point Settings at whisper-cli.exe + a ggml-*.bin model and press Start.</span>
+<span class="c"># 4. Launch — then open Settings and use the in-app Download buttons</span>
+<span class="c">#    to grab a whisper-cli variant (CUDA 12.4 recommended for NVIDIA GPUs)</span>
+<span class="c">#    and a GGML model. Press Start on the Chat tab to begin transcribing.</span>
 bun run dev</pre>
         <p style="margin-top: 24px; color: var(--ink-dim); font-size: 14px">
           Prefer a one-shot install? Paste the
@@ -823,8 +836,8 @@ bun run dev</pre>
             >Setup with AI</a
           >
           prompt from the README into Claude Code or Codex — it installs every
-          prerequisite, downloads whisper.cpp + a model, and writes the
-          settings file for you.
+          prerequisite and builds the project; the whisper runtime + model are
+          then downloaded from inside the app on first launch.
         </p>
       </div>
     </section>

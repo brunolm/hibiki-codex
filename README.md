@@ -7,8 +7,8 @@
 A Windows desktop app that:
 
 1. Captures **WASAPI loopback** from your default playback device.
-2. Transcribes it locally with **whisper.cpp** (Japanese or English) into a live
-   chat-style scrolling transcript.
+2. Transcribes it locally with **whisper.cpp** (auto-detected, Japanese, or
+   English) into a live chat-style scrolling transcript.
 3. Lets you ask **Claude** (`claude -p`) or **OpenAI Codex** (`codex exec`) — or
    both at once — about what you've been hearing. Responses appear in a side
    panel with the recent transcript automatically attached as context.
@@ -20,19 +20,38 @@ future native work.
 ## Architecture
 
 ```
-src/main/        Electron main: settings, audio capture, transcribe loop, AI shell
-src/preload/     contextBridge → window.api
-src/renderer/    React + TS UI (Chat / Settings views)
-native/          Rust crate (napi-rs) compiled to a Node-API .node
-resources/       wasapi-loopback.ps1 — WASAPI loopback capture script
+src/main/
+  audio.ts                     WASAPI loopback capture (PowerShell ring buffer)
+  transcribe.ts                whisper-cli wrapper, cancel-on-Stop
+  transcribeLoop.ts            interval scheduler that feeds transcribe.ts
+  transcript.ts                in-memory transcript store
+  ai.ts                        spawns claude -p / codex exec, WSL wrapper
+  aiDetect.ts                  async parallel probes for claude/codex on PATH + WSL
+  aiInstall.ts                 winget install of Claude Code on Windows
+  paths.ts                     bundled VAD + userData/{whisper-runtime,models}/ paths
+  whisperCatalog.ts            curated whisper.cpp model catalog
+  modelDownload.ts             streaming model downloader with cancel
+  whisperRuntimeCatalog.ts     CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4 variants
+  whisperRuntimeDownload.ts    streams zip + pwsh Expand-Archive
+  settings.ts                  persisted Settings type + JSON file
+  index.ts                     IPC handlers, app lifecycle
+src/preload/                   contextBridge → window.api (typed)
+src/renderer/                  React + TS UI (Chat / Settings views)
+native/                        Rust crate (napi-rs) compiled to a Node-API .node
+resources/
+  wasapi-loopback.ps1          WASAPI loopback capture script
+  whisper/                     auto-fetched Silero VAD (.bin) — runtime is NOT bundled
+scripts/
+  fetch-whisper.mjs            build-time fetch of the bundled VAD
+  whisper.config.json          VAD pin
 ```
 
 ## Setup with AI
 
 Paste the prompt below into Claude Code (`claude`) or OpenAI Codex (`codex`)
-from the project root. The agent will install every prerequisite, build the
-native module, fetch `whisper-cli.exe` plus a model, and write the paths into
-the app's settings file so the Whisper tab is pre-filled on first launch.
+from the project root. The agent installs every prerequisite and builds the
+project; the **whisper-cli runtime and model are downloaded from inside the
+app** on first launch, so the agent doesn't need to fetch them.
 
 ```text
 You are setting up the Hibiki Codex project on Windows 11 with PowerShell 7+.
@@ -53,38 +72,33 @@ installed, and verify each step before moving on.
      mise install
    Verify with `mise exec -- bun --version` and `mise exec -- cargo --version`.
 
-3. Install JS deps and build the Rust native module (run inside `mise exec --`
+3. Install at least one AI CLI on PATH (skip whichever ones are already there):
+   - Claude Code:   npm install -g @anthropic-ai/claude-code
+                    (or `winget install Anthropic.ClaudeCode` — the app can
+                     also run this for you from Settings → Claude → Install.)
+   - OpenAI Codex:  npm install -g @openai/codex
+   Verify with `claude --version` and/or `codex --version`.
+
+4. Install JS deps and build the Rust native module (run inside `mise exec --`
    or after `mise activate` so the pinned toolchain is on PATH):
      bun install
      bun install --cwd native
      bun run build:rust
 
-4. Download whisper.cpp CLI and a model into `tools\whisper\` at the repo root:
-   - Fetch the latest Windows whisper.cpp release zip from
-     https://github.com/ggerganov/whisper.cpp/releases (pick the cuBLAS build
-     if the machine has an NVIDIA GPU, otherwise the plain Windows build),
-     extract it, and locate `whisper-cli.exe`.
-   - Download a model from https://huggingface.co/ggerganov/whisper.cpp/.
-     Default to `ggml-large-v3-turbo.bin` for quality; if disk or RAM is tight,
-     fall back to `ggml-medium.bin` or `ggml-small.bin`. Do NOT pick `.en`
-     variants — this app supports Japanese too.
-   - Also download the Silero VAD model `ggml-silero-v5.1.2.bin` from the same
-     repo and place it next to the whisper model.
-
-5. Write the discovered absolute paths into
-   `%APPDATA%\Hibiki Codex\settings.json`, creating the file if missing and
-   merging with any existing JSON. Use these exact keys (they match the
-   `Settings` type in src/main/settings.ts):
-     whisperExe        → full path to whisper-cli.exe
-     whisperModel      → full path to the downloaded ggml-*.bin
-     whisperVadModel   → full path to ggml-silero-v5.1.2.bin
-     whisperLanguage   → "ja"  (leave existing value if already set)
-
-6. Verify the build works:
+5. Verify the build:
      bun run typecheck
 
-Report a short summary at the end: versions of bun / cargo / pwsh, the model
-chosen, and the settings.json path you wrote. Do not start the dev server.
+6. Do NOT fetch whisper-cli or any GGML model. The app downloads both from
+   Settings on first launch:
+   - Settings → Whisper → Whisper executable → "Download…" picks a variant
+     (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4) and installs it into the app's
+     userData folder.
+   - Settings → Whisper → Whisper model → "Download…" picks from a curated
+     catalog (Tiny / Base / Small / Large v3 Turbo / Anime Whisper / Kotoba
+     Whisper / *.en) and saves into <userData>/models/.
+
+Report a short summary at the end: versions of bun / cargo / pwsh, which AI
+CLIs you installed. Do not start the dev server.
 ```
 
 ## Setup
@@ -106,16 +120,29 @@ versions in `mise.toml`. Then build:
 bun install
 bun install --cwd native
 bun run build:rust
+bun run dev
 ```
 
-Download whisper.cpp + a model from
-<https://github.com/ggerganov/whisper.cpp/releases> and
-<https://huggingface.co/ggerganov/whisper.cpp/>. The Settings page lets you
-point at:
+On first launch, open **Settings** and:
 
-- `whisper-cli.exe`
-- a `ggml-*.bin` model (do **not** pick `.en` variants if you want Japanese)
-- optionally a Silero VAD model (`ggml-silero-v5.1.2.bin`)
+1. **Whisper executable → Download…** picks the whisper.cpp runtime variant
+   matching your hardware. The CUDA 12.4 build is recommended for NVIDIA GPUs
+   (~200 MB system RAM at runtime); the CPU build is universal but uses
+   ~2 GB RAM. Installs into `%APPDATA%\Hibiki Codex\whisper-runtime\<id>\`.
+2. **Whisper model → Download…** picks a GGML model from the curated catalog.
+   Defaults to Large v3 Turbo (q8_0). Saves into
+   `%APPDATA%\Hibiki Codex\models\`.
+3. **VAD model** is already bundled with the installer — leave the field
+   empty to use it.
+4. **Language** defaults to `auto` (whisper detects per chunk). Pick `ja` or
+   `en` to skip detection latency.
+5. **Claude / Codex tabs** auto-detect whether each CLI is on `PATH` or
+   inside WSL and pulse the tab if neither is usable. The Claude tab has an
+   **Install via winget** button on Windows; both tabs have a **Use WSL**
+   checkbox if your install lives in your default WSL distro.
+
+Press **Start** on the Chat view, play some audio, type a question, hit Enter.
+With both engines selected you get parallel response cards, one per engine.
 
 Settings live at `%APPDATA%\Hibiki Codex\settings.json`. (If you used the
 previous name `ai-transcribe-prompt`, your old settings are migrated
@@ -129,32 +156,40 @@ bun run build    # production bundle
 bun run typecheck
 ```
 
-Open Settings, fill in the whisper paths, pick a language and engine(s), then
-go to Chat and press **Start**. Play some audio. Type a question into the
-input, hit Enter — the answer appears in the right panel. With both engines
-selected you get parallel cards, one per engine, for comparison.
-
 ## Configurable in Settings
 
 **Whisper tab**
 
 | Field | Notes |
 |-------|------|
-| Whisper exe / model / VAD | Paths to the binaries |
-| Language | `ja` or `en` |
-| Whisper threads | Match your fast cores |
-| Transcribe interval (s) | Lower = lower latency, more CPU |
-| Audio buffer (s) | Rolling buffer length |
+| Whisper executable | Path to `whisper-cli.exe`. Required. `Download…` opens the runtime variant chooser (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4 — CUDA 12.4 is the recommended pick). |
+| Whisper model | Path to a `ggml-*.bin`. Required. `Download…` opens the curated model catalog. |
+| VAD model | Optional. Empty → falls back to the bundled Silero VAD. |
+| Language | `auto` (default), `ja`, `en`. Auto-detect adds a little latency. |
+| Whisper threads | Match your fast cores (default 4). |
+| Transcribe interval (s) | Lower = lower latency, more CPU. |
+| Audio buffer (s) | Rolling buffer length. |
 
 **Claude tab** (override `~/.claude/settings.json` defaults)
 
 | Field | Notes |
 |-------|------|
-| Model | e.g. `opus` / `sonnet` / `haiku`, or a model id. Empty = use default. |
-| Effort | `low` / `medium` / `high` / `xhigh`. Empty = use default. |
+| Detection row | Shows whether `claude` is on Windows PATH and/or in WSL. The tab pulses if neither side is usable. |
+| Use WSL | Run `wsl claude -p …` instead of the Windows-side binary. |
+| Install panel | Shown when Claude isn't detected on the active backend. On Windows, **Install via winget** runs the install live. |
+| Model | e.g. `opus` / `sonnet` / `haiku`, or a model id. Empty = engine default. |
+| Effort | `low` / `medium` / `high` / `xhigh`. Empty = engine default. |
 
 **Codex tab** (override `~/.codex/config.toml` defaults)
 
 | Field | Notes |
 |-------|------|
-| Model | e.g. `gpt-5` / `o3`. Empty = use default. |
+| Detection row | Windows PATH + WSL probes, same as the Claude tab. |
+| Use WSL | Run through `wsl codex exec …` (the output-last-message file path is auto-translated to `/mnt/c/...`). |
+| Model | e.g. `gpt-5` / `o3`. Empty = engine default. |
+
+**Bottom actions**
+
+- **Save** persists the draft. **Cancel** reverts every tab's unsaved
+  changes. **Reset to defaults** asks for confirmation and only resets the
+  *current* tab's fields.
