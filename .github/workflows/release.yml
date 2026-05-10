@@ -2,7 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*' # e.g., v0.1.0, v1.2.3, v1.2.3-rc1
   workflow_dispatch:
 
 permissions:
@@ -50,16 +51,31 @@ jobs:
           GH_TOKEN: ""
         run: bun run package:win
 
-      - name: Read version + short SHA
+      - name: Read version + release metadata
         id: meta
         shell: bash
         run: |
           VERSION=$(node -p "require('./package.json').version")
           SHORT_SHA=$(git rev-parse --short HEAD)
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            # Real release — use the git tag as-is, mark non-prerelease.
+            TAG="${{ github.ref_name }}"
+            NAME="$TAG"
+            PRERELEASE=false
+          else
+            # Manual dispatch — synthetic build tag, mark as prerelease.
+            TAG="v${VERSION}-build.${{ github.run_number }}"
+            NAME="Build ${{ github.run_number }} · ${SHORT_SHA}"
+            PRERELEASE=true
+          fi
+
           {
             echo "version=$VERSION"
             echo "short_sha=$SHORT_SHA"
-            echo "tag=v${VERSION}-build.${{ github.run_number }}"
+            echo "tag=$TAG"
+            echo "name=$NAME"
+            echo "prerelease=$PRERELEASE"
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload build artifacts (workflow-scoped)
@@ -77,16 +93,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: Build ${{ github.run_number }} · ${{ steps.meta.outputs.short_sha }}
+          name: ${{ steps.meta.outputs.name }}
           body: |
-            Automated build from `main` (commit ${{ github.sha }}).
+            Automated build (commit ${{ github.sha }}).
 
             ### Downloads
             - **Setup installer** — `Hibiki Codex Setup ${{ steps.meta.outputs.version }}.exe`
             - **Portable** — `Hibiki Codex-${{ steps.meta.outputs.version }}-portable.exe`
 
             > Unsigned build — Windows SmartScreen will warn on first launch. Click **More info → Run anyway**.
-          prerelease: true
+          prerelease: ${{ steps.meta.outputs.prerelease }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |

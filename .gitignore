@@ -17,7 +17,6 @@ native/*.node
 # Editor / OS / agent state
 .vscode/
 .idea/
-.claude/
 .DS_Store
 Thumbs.db
 
