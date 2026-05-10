@@ -1,0 +1,94 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # required to create releases
+
+concurrency:
+  # Don't queue builds — newer commits cancel in-flight ones.
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so release notes can diff against the previous tag
+
+      - name: Set up mise (Bun + Rust pinned in mise.toml)
+        uses: jdx/mise-action@v2
+        with:
+          experimental: true
+
+      - name: Install JS dependencies
+        run: |
+          bun install
+          bun install --cwd native
+
+      - name: Build Rust native module (release)
+        run: bun run build:rust
+
+      - name: Bundle main / preload / renderer
+        run: bun run build
+
+      - name: Type-check
+        run: bun run typecheck
+
+      - name: Package with electron-builder
+        env:
+          # Stop electron-builder from trying to publish — we handle the
+          # GitHub release ourselves below.
+          GH_TOKEN: ""
+        run: bunx --bun electron-builder --win --publish never
+
+      - name: Read version + short SHA
+        id: meta
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          {
+            echo "version=$VERSION"
+            echo "short_sha=$SHORT_SHA"
+            echo "tag=v${VERSION}-build.${{ github.run_number }}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload build artifacts (workflow-scoped)
+        uses: actions/upload-artifact@v4
+        with:
+          name: hibiki-codex-windows-${{ steps.meta.outputs.short_sha }}
+          path: |
+            release/${{ steps.meta.outputs.version }}/*.exe
+            release/${{ steps.meta.outputs.version }}/*.yml
+            release/${{ steps.meta.outputs.version }}/*.blockmap
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Build ${{ github.run_number }} · ${{ steps.meta.outputs.short_sha }}
+          body: |
+            Automated build from `main` (commit ${{ github.sha }}).
+
+            ### Downloads
+            - **Setup installer** — `Hibiki Codex Setup ${{ steps.meta.outputs.version }}.exe`
+            - **Portable** — `Hibiki Codex-${{ steps.meta.outputs.version }}-portable.exe`
+
+            > Unsigned build — Windows SmartScreen will warn on first launch. Click **More info → Run anyway**.
+          prerelease: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release/${{ steps.meta.outputs.version }}/*.exe
+            release/${{ steps.meta.outputs.version }}/latest.yml
+            release/${{ steps.meta.outputs.version }}/*.blockmap

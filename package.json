@@ -23,7 +23,61 @@
     "build:rust": "bun run --cwd native build",
     "build:rust:debug": "bun run --cwd native build:debug",
     "start": "electron-vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json"
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "dist": "bun run build:rust && bun run build && electron-builder --win",
+    "dist:dir": "bun run build:rust && bun run build && electron-builder --win --dir"
+  },
+  "build": {
+    "appId": "com.brunolm.hibikicodex",
+    "productName": "Hibiki Codex",
+    "copyright": "Copyright © 2026 brunolm",
+    "directories": {
+      "output": "release/${version}"
+    },
+    "files": [
+      "out/**/*",
+      "package.json",
+      "!**/.{git,DS_Store,vscode,idea}",
+      "!**/{tsconfig*.json,electron.vite.config.*,bun.lock,package-lock.json}"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/wasapi-loopback.ps1",
+        "to": "wasapi-loopback.ps1"
+      },
+      {
+        "from": "resources/app-icon.png",
+        "to": "app-icon.png"
+      },
+      {
+        "from": "native",
+        "to": "native",
+        "filter": [
+          "index.js",
+          "package.json",
+          "*.node"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "resources/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hibiki Codex",
+      "uninstallDisplayName": "Hibiki Codex"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    }
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -31,6 +85,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
     "electron-vite": "^2.3.0",
     "typescript": "^5.7.2",
     "vite": "^5.4.11"
