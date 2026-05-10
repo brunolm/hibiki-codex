@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu, screen } from 'electron'
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -304,6 +304,9 @@ function applyWslDefaults(): void {
 
 void app.whenReady().then(() => {
   settings.init()
+  // Drop the default Electron menu (File / Edit / View / Window / Help)
+  // so the topbar is our only chrome.
+  Menu.setApplicationMenu(null)
   if (process.platform === 'win32') {
     // Ensures the taskbar groups under our identity (and uses our icon)
     // instead of electron.exe in dev mode.
