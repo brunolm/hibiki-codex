@@ -1,10 +1,24 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { existsSync } from 'node:fs'
+import { mkdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as settings from './settings'
 import * as audio from './audio'
 import * as transcript from './transcript'
 import * as transcribeLoop from './transcribeLoop'
-import { warmupWhisper } from './transcribe'
+import { warmupWhisper, cancelTranscriptions } from './transcribe'
+import {
+  bundledWhisperVad,
+  whisperModelsRoot,
+  whisperRuntimeDir
+} from './paths'
+import { WHISPER_CATALOG } from './whisperCatalog'
+import { cancelDownload, startDownload } from './modelDownload'
+import { WHISPER_RUNTIME_VARIANTS } from './whisperRuntimeCatalog'
+import {
+  cancelRuntimeDownload,
+  downloadAndInstall as downloadWhisperRuntime
+} from './whisperRuntimeDownload'
 import * as ai from './ai'
 import * as aiDetect from './aiDetect'
 import * as aiInstall from './aiInstall'
@@ -96,7 +110,9 @@ ipcMain.handle(
 ipcMain.handle('transcribe:start', async () => {
   const s = settings.get()
   if (!s.whisperExe || !s.whisperModel) {
-    throw new Error('Configure whisper exe and model in Settings first.')
+    throw new Error(
+      'Configure a whisper executable and model in Settings (use the Download… buttons if you don\'t have them yet).'
+    )
   }
   audio.startAudioCapture()
   send('transcribe:status', { running: true, warming: true })
@@ -112,6 +128,9 @@ ipcMain.handle('transcribe:start', async () => {
 ipcMain.handle('transcribe:stop', () => {
   transcribeLoop.stop()
   audio.stopAudioCapture()
+  // Abort any whisper inferences that were already running so a long tick
+  // doesn't keep burning CPU after the user clicks Stop.
+  cancelTranscriptions()
   send('transcribe:status', { running: false, warming: false })
 })
 
@@ -135,6 +154,7 @@ ipcMain.handle('ai:cancel', () => {
   ai.cancel()
 })
 
+ipcMain.handle('paths:bundledWhisperVad', () => bundledWhisperVad())
 ipcMain.handle('paths:detectedEngines', () => aiDetect.detectEngines())
 ipcMain.handle('paths:recheckEngines', () => {
   aiDetect.clearDetectionCache()
@@ -143,6 +163,59 @@ ipcMain.handle('paths:recheckEngines', () => {
 
 ipcMain.handle('install:claude', async () => {
   return aiInstall.installClaude((line) => send('install:log', line))
+})
+
+ipcMain.handle('models:list', () => WHISPER_CATALOG)
+
+ipcMain.handle('models:listInstalled', () => {
+  const root = whisperModelsRoot()
+  const result: Record<string, string> = {}
+  for (const m of WHISPER_CATALOG) {
+    const p = join(root, m.filename)
+    if (existsSync(p)) result[m.id] = p
+  }
+  return result
+})
+
+ipcMain.handle('models:download', async (_e, modelId: string) => {
+  const model = WHISPER_CATALOG.find((m) => m.id === modelId)
+  if (!model) throw new Error(`unknown model: ${modelId}`)
+
+  // Save into <userData>/models/<filename>. Mirrors the whisper-runtime
+  // layout — no save dialog, no Downloads-folder pollution.
+  const dir = whisperModelsRoot()
+  await mkdir(dir, { recursive: true })
+  const destPath = join(dir, model.filename)
+
+  await startDownload(model.url, destPath, (info) => {
+    send('models:progress', info)
+  })
+  return destPath
+})
+
+ipcMain.handle('models:cancel', () => {
+  cancelDownload()
+})
+
+ipcMain.handle('whisperRuntime:list', () => WHISPER_RUNTIME_VARIANTS)
+
+ipcMain.handle('whisperRuntime:listInstalled', () => {
+  const result: Record<string, string> = {}
+  for (const v of WHISPER_RUNTIME_VARIANTS) {
+    const exe = join(whisperRuntimeDir(v.id), 'whisper-cli.exe')
+    if (existsSync(exe)) result[v.id] = exe
+  }
+  return result
+})
+
+ipcMain.handle('whisperRuntime:download', async (_e, variantId: string) => {
+  return downloadWhisperRuntime(variantId, (info) => {
+    send('whisperRuntime:progress', info)
+  })
+})
+
+ipcMain.handle('whisperRuntime:cancel', () => {
+  cancelRuntimeDownload()
 })
 
 function applyWslDefaults(): void {

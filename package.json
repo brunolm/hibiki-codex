@@ -18,8 +18,9 @@
   },
   "main": "out/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "fetch:whisper": "node scripts/fetch-whisper.mjs",
+    "dev": "node scripts/fetch-whisper.mjs && electron-vite dev",
+    "build": "node scripts/fetch-whisper.mjs && electron-vite build",
     "build:rust": "bun run --cwd native build",
     "build:rust:debug": "bun run --cwd native build:debug",
     "start": "electron-vite preview",
@@ -49,6 +50,15 @@
       {
         "from": "resources/app-icon.png",
         "to": "app-icon.png"
+      },
+      {
+        "from": "resources/whisper",
+        "to": "whisper",
+        "filter": [
+          "**/*",
+          "!README.md",
+          "!.version"
+        ]
       },
       {
         "from": "native",

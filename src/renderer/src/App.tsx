@@ -154,6 +154,7 @@ export function App(): JSX.Element {
     setMessages([])
   }
 
+  const needsExe = !settings?.whisperExe
   const needsModel = !settings?.whisperModel
   const claudeUsable = settings
     ? settings.claudeUseWsl
@@ -166,7 +167,15 @@ export function App(): JSX.Element {
       : detectedEngines.codex.windows
     : false
   const noEngineDetected = !claudeUsable && !codexUsable
-  const settingsNeedsAttention = needsModel || noEngineDetected
+  const settingsNeedsAttention = needsExe || needsModel || noEngineDetected
+  const settingsTooltip = ((): string | undefined => {
+    if (!settingsNeedsAttention) return undefined
+    const missing: string[] = []
+    if (needsExe) missing.push('Whisper executable')
+    if (needsModel) missing.push('Whisper model')
+    if (noEngineDetected) missing.push('an AI engine (Claude or Codex)')
+    return `Configure ${missing.join(', ')} in Settings.`
+  })()
 
   async function submitPrompt(prompt: string): Promise<void> {
     const engines: Engine[] =
@@ -243,15 +252,7 @@ export function App(): JSX.Element {
               settingsNeedsAttention ? ' needs-attention' : ''
             }`}
             onClick={() => setView('settings')}
-            title={
-              needsModel && noEngineDetected
-                ? 'Set a Whisper model and install Claude or Codex CLI.'
-                : needsModel
-                  ? 'Set a Whisper model in Settings to enable transcription.'
-                  : noEngineDetected
-                    ? 'Neither Claude nor Codex CLI is on PATH. Install one to enable AI requests.'
-                    : undefined
-            }
+            title={settingsTooltip}
           >
             Settings
           </button>

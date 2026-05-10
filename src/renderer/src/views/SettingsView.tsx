@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { DetectedEngines, Settings } from '../../../preload'
 import { EngineIcon } from '../components/EngineIcon'
 import { ClaudeInstallPanel } from '../components/ClaudeInstallPanel'
+import { ModelDownloadModal } from '../components/ModelDownloadModal'
+import { WhisperRuntimeDownloadModal } from '../components/WhisperRuntimeDownloadModal'
 
 type Props = {
   settings: Settings
@@ -75,6 +77,13 @@ export function SettingsView({
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [confirmResetTab, setConfirmResetTab] = useState<Tab | null>(null)
+  const [bundledVad, setBundledVad] = useState<string | null>(null)
+  const [showModelModal, setShowModelModal] = useState(false)
+  const [showRuntimeModal, setShowRuntimeModal] = useState(false)
+
+  useEffect(() => {
+    void window.api.paths.bundledWhisperVad().then(setBundledVad)
+  }, [])
 
   const claudeDet = detectedEngines?.claude ?? { windows: true, wsl: false }
   const codexDet = detectedEngines?.codex ?? { windows: true, wsl: false }
@@ -173,12 +182,18 @@ export function SettingsView({
           {tab === 'whisper' && (
             <section className="settings-section">
               <label>
-                <span>Whisper executable</span>
+                <span>
+                  Whisper executable
+                  {!draft.whisperExe && (
+                    <span className="required-tag">required</span>
+                  )}
+                </span>
                 <div className="row">
                   <input
+                    className={!draft.whisperExe ? 'required-empty' : ''}
                     value={draft.whisperExe}
                     onChange={(e) => set('whisperExe', e.target.value)}
-                    placeholder="C:\System\whisper\whisper-cli.exe"
+                    placeholder="C:\path\to\whisper-cli.exe"
                   />
                   <button
                     onClick={() =>
@@ -189,16 +204,29 @@ export function SettingsView({
                   >
                     Browse
                   </button>
+                  <button onClick={() => setShowRuntimeModal(true)}>
+                    Download…
+                  </button>
                 </div>
+                <small className={!draft.whisperExe ? 'required' : ''}>
+                  Point at an existing <code>whisper-cli.exe</code>, or download
+                  one (CPU / CUDA variants).
+                </small>
               </label>
 
               <label>
-                <span>Whisper model</span>
+                <span>
+                  Whisper model
+                  {!draft.whisperModel && (
+                    <span className="required-tag">required</span>
+                  )}
+                </span>
                 <div className="row">
                   <input
+                    className={!draft.whisperModel ? 'required-empty' : ''}
                     value={draft.whisperModel}
                     onChange={(e) => set('whisperModel', e.target.value)}
-                    placeholder="C:\System\whisper\ggml-large-v3-turbo-q8_0.bin"
+                    placeholder="C:\path\to\ggml-<model>.bin"
                   />
                   <button
                     onClick={() =>
@@ -209,7 +237,14 @@ export function SettingsView({
                   >
                     Browse
                   </button>
+                  <button onClick={() => setShowModelModal(true)}>
+                    Download…
+                  </button>
                 </div>
+                <small className={!draft.whisperModel ? 'required' : ''}>
+                  Pick an existing <code>.bin</code> on disk, or download one
+                  from the curated list.
+                </small>
               </label>
 
               <label>
@@ -218,7 +253,11 @@ export function SettingsView({
                   <input
                     value={draft.whisperVadModel}
                     onChange={(e) => set('whisperVadModel', e.target.value)}
-                    placeholder="C:\System\whisper\ggml-silero-v5.1.2.bin"
+                    placeholder={
+                      bundledVad
+                        ? `(bundled) ${bundledVad}`
+                        : '(none bundled — optional)'
+                    }
                   />
                   <button
                     onClick={() =>
@@ -230,6 +269,7 @@ export function SettingsView({
                     Browse
                   </button>
                 </div>
+                <small>Leave empty to use the bundled Silero VAD model.</small>
               </label>
 
               <label>
@@ -439,6 +479,24 @@ export function SettingsView({
           </div>
         </div>
       </div>
+      {showModelModal && (
+        <ModelDownloadModal
+          onClose={() => setShowModelModal(false)}
+          onDownloaded={(path) => {
+            set('whisperModel', path)
+            void onSave({ whisperModel: path })
+          }}
+        />
+      )}
+      {showRuntimeModal && (
+        <WhisperRuntimeDownloadModal
+          onClose={() => setShowRuntimeModal(false)}
+          onInstalled={(exePath) => {
+            set('whisperExe', exePath)
+            void onSave({ whisperExe: exePath })
+          }}
+        />
+      )}
       {confirmResetTab && (
         <div
           className="modal-overlay"

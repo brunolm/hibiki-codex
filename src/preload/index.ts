@@ -28,6 +28,40 @@ export type DetectedEngines = {
   codex: EngineDetection
 }
 
+export type WhisperCatalogModel = {
+  id: string
+  filename: string
+  sizeBytes: number
+  group: 'multilingual' | 'japanese' | 'english'
+  label: string
+  description: string
+  url: string
+  recommended?: boolean
+}
+
+export type DownloadProgress = {
+  bytesDownloaded: number
+  totalBytes: number
+  rateBytesPerSec: number
+}
+
+export type WhisperRuntimeVariant = {
+  id: string
+  label: string
+  description: string
+  asset: string
+  sizeBytes: number
+  url: string
+  recommended?: boolean
+}
+
+export type WhisperRuntimeProgress = {
+  phase: 'downloading' | 'extracting'
+  bytesDownloaded: number
+  totalBytes: number
+  rateBytesPerSec: number
+}
+
 export type TranscribeStatus = { running: boolean; warming: boolean }
 export type TranscribeLine = { text: string; at: number }
 export type AudioLog = { msg: string; level: 'info' | 'warn' | 'error' }
@@ -84,10 +118,39 @@ const api = {
     cancel: (): Promise<void> => ipcRenderer.invoke('ai:cancel')
   },
   paths: {
+    bundledWhisperVad: (): Promise<string | null> =>
+      ipcRenderer.invoke('paths:bundledWhisperVad'),
     detectedEngines: (): Promise<DetectedEngines> =>
       ipcRenderer.invoke('paths:detectedEngines'),
     recheckEngines: (): Promise<DetectedEngines> =>
       ipcRenderer.invoke('paths:recheckEngines')
+  },
+  models: {
+    list: (): Promise<WhisperCatalogModel[]> => ipcRenderer.invoke('models:list'),
+    listInstalled: (): Promise<Record<string, string>> =>
+      ipcRenderer.invoke('models:listInstalled'),
+    download: (modelId: string): Promise<string | null> =>
+      ipcRenderer.invoke('models:download', modelId),
+    cancel: (): Promise<void> => ipcRenderer.invoke('models:cancel'),
+    onProgress: (cb: (p: DownloadProgress) => void): (() => void) => {
+      const fn = (_e: unknown, p: DownloadProgress): void => cb(p)
+      ipcRenderer.on('models:progress', fn)
+      return () => ipcRenderer.off('models:progress', fn)
+    }
+  },
+  whisperRuntime: {
+    list: (): Promise<WhisperRuntimeVariant[]> =>
+      ipcRenderer.invoke('whisperRuntime:list'),
+    listInstalled: (): Promise<Record<string, string>> =>
+      ipcRenderer.invoke('whisperRuntime:listInstalled'),
+    download: (variantId: string): Promise<string> =>
+      ipcRenderer.invoke('whisperRuntime:download', variantId),
+    cancel: (): Promise<void> => ipcRenderer.invoke('whisperRuntime:cancel'),
+    onProgress: (cb: (p: WhisperRuntimeProgress) => void): (() => void) => {
+      const fn = (_e: unknown, p: WhisperRuntimeProgress): void => cb(p)
+      ipcRenderer.on('whisperRuntime:progress', fn)
+      return () => ipcRenderer.off('whisperRuntime:progress', fn)
+    }
   },
   install: {
     claude: (): Promise<number | null> => ipcRenderer.invoke('install:claude'),
