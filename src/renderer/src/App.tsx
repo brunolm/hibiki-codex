@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react'
-import type { Engine, Settings, TranscribeStatus } from '../../preload'
+import { useEffect, useRef, useState } from 'react'
+import type {
+  DetectedEngines,
+  Engine,
+  Settings,
+  TranscribeStatus
+} from '../../preload'
 import { ChatView } from './views/ChatView'
 import { SettingsView } from './views/SettingsView'
 import { EngineIcon } from './components/EngineIcon'
@@ -15,12 +20,17 @@ export type AiExchange = {
   error: string | null
   pending: boolean
   at: number
+  endedAt: number | null
   engine: Engine
 }
 
 export function App(): JSX.Element {
   const [view, setView] = useState<View>('chat')
   const [settings, setSettings] = useState<Settings | null>(null)
+  const [detectedEngines, setDetectedEngines] = useState<DetectedEngines>({
+    claude: { windows: true, wsl: false },
+    codex: { windows: true, wsl: false }
+  })
   const [status, setStatus] = useState<TranscribeStatus>({
     running: false,
     warming: false
@@ -31,16 +41,74 @@ export function App(): JSX.Element {
 
   useEffect(() => {
     void window.api.settings.get().then(setSettings)
+    void window.api.paths.detectedEngines().then(setDetectedEngines)
   }, [])
+
+  async function recheckEngines(): Promise<void> {
+    const next = await window.api.paths.recheckEngines()
+    setDetectedEngines(next)
+  }
+
+  // The warmup window can be near-instant on warm caches, which makes the
+  // splash flicker. Hold the warming=true display for at least 3s so the
+  // user actually registers the state change.
+  const warmingStartedAtRef = useRef<number | null>(null)
+  const warmingTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (warmingTimerRef.current !== null) {
+        window.clearTimeout(warmingTimerRef.current)
+      }
+    }
+  }, [])
+
+  function applyStatus(next: TranscribeStatus): void {
+    setStatus((prev) => {
+      if (next.warming && !prev.warming) {
+        warmingStartedAtRef.current = Date.now()
+        if (warmingTimerRef.current !== null) {
+          window.clearTimeout(warmingTimerRef.current)
+          warmingTimerRef.current = null
+        }
+      }
+      if (!next.warming && warmingStartedAtRef.current !== null) {
+        const elapsed = Date.now() - warmingStartedAtRef.current
+        const minMs = 3000
+        if (elapsed < minMs) {
+          if (warmingTimerRef.current === null) {
+            warmingTimerRef.current = window.setTimeout(() => {
+              warmingTimerRef.current = null
+              warmingStartedAtRef.current = null
+              setStatus((s) => ({ ...s, warming: false }))
+            }, minMs - elapsed)
+          }
+          // Keep warming=true visible for now; preserve the new running flag.
+          return { ...prev, running: next.running, warming: true }
+        }
+        warmingStartedAtRef.current = null
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     const offLine = window.api.transcribe.onLine((line) => {
-      setMessages((m) => [
-        ...m,
-        { id: `${line.at}-${Math.random().toString(36).slice(2, 8)}`, ...line }
-      ])
+      setMessages((m) => {
+        const next = {
+          id: `${line.at}-${Math.random().toString(36).slice(2, 8)}`,
+          ...line
+        }
+        if (m.length === 0 || next.at >= m[m.length - 1]!.at) {
+          return [...m, next]
+        }
+        const idx = m.findIndex((x) => x.at > next.at)
+        return idx === -1
+          ? [...m, next]
+          : [...m.slice(0, idx), next, ...m.slice(idx)]
+      })
     })
-    const offStatus = window.api.transcribe.onStatus(setStatus)
+    const offStatus = window.api.transcribe.onStatus(applyStatus)
     const offErr = window.api.transcribe.onError((msg) => {
       setNotice(msg)
     })
@@ -86,6 +154,20 @@ export function App(): JSX.Element {
     setMessages([])
   }
 
+  const needsModel = !settings?.whisperModel
+  const claudeUsable = settings
+    ? settings.claudeUseWsl
+      ? detectedEngines.claude.wsl
+      : detectedEngines.claude.windows
+    : false
+  const codexUsable = settings
+    ? settings.codexUseWsl
+      ? detectedEngines.codex.wsl
+      : detectedEngines.codex.windows
+    : false
+  const noEngineDetected = !claudeUsable && !codexUsable
+  const settingsNeedsAttention = needsModel || noEngineDetected
+
   async function submitPrompt(prompt: string): Promise<void> {
     const engines: Engine[] =
       settings?.aiEngines && settings.aiEngines.length > 0
@@ -104,6 +186,7 @@ export function App(): JSX.Element {
       error: null,
       pending: true,
       at: stamp + i,
+      endedAt: null,
       engine
     }))
     setExchanges((x) => [...newExchanges.slice().reverse(), ...x])
@@ -116,16 +199,23 @@ export function App(): JSX.Element {
             prompt,
             transcriptContext
           )
+          const endedAt = Date.now()
           setExchanges((xs) =>
             xs.map((e) =>
-              e.id === ex.id ? { ...e, response, pending: false } : e
+              e.id === ex.id ? { ...e, response, pending: false, endedAt } : e
             )
           )
         } catch (err) {
+          const endedAt = Date.now()
           setExchanges((xs) =>
             xs.map((e) =>
               e.id === ex.id
-                ? { ...e, error: (err as Error).message, pending: false }
+                ? {
+                    ...e,
+                    error: (err as Error).message,
+                    pending: false,
+                    endedAt
+                  }
                 : e
             )
           )
@@ -149,8 +239,19 @@ export function App(): JSX.Element {
             Chat
           </button>
           <button
-            className={view === 'settings' ? 'tab active' : 'tab'}
+            className={`${view === 'settings' ? 'tab active' : 'tab'}${
+              settingsNeedsAttention ? ' needs-attention' : ''
+            }`}
             onClick={() => setView('settings')}
+            title={
+              needsModel && noEngineDetected
+                ? 'Set a Whisper model and install Claude or Codex CLI.'
+                : needsModel
+                  ? 'Set a Whisper model in Settings to enable transcription.'
+                  : noEngineDetected
+                    ? 'Neither Claude nor Codex CLI is on PATH. Install one to enable AI requests.'
+                    : undefined
+            }
           >
             Settings
           </button>
@@ -206,9 +307,16 @@ export function App(): JSX.Element {
           onClear={clearTranscript}
           onClearAi={() => setExchanges([])}
           onSubmit={submitPrompt}
+          needsModel={needsModel}
+          noEngineDetected={noEngineDetected}
         />
       ) : settings ? (
-        <SettingsView settings={settings} onSave={saveSettings} />
+        <SettingsView
+          settings={settings}
+          onSave={saveSettings}
+          detectedEngines={detectedEngines}
+          onRecheckEngines={recheckEngines}
+        />
       ) : (
         <div className="loading">loading settings…</div>
       )}

@@ -3,6 +3,7 @@ import type { Engine, TranscribeStatus } from '../../../preload'
 import type { AiExchange, TranscriptMessage } from '../App'
 import { EngineIcon } from '../components/EngineIcon'
 import hibikiImg from '../assets/hibiki.png'
+import warmupImg from '../assets/warmup.png'
 
 type Props = {
   messages: TranscriptMessage[]
@@ -19,11 +20,22 @@ type Props = {
   onClear: () => void
   onClearAi: () => void
   onSubmit: (prompt: string) => void
+  needsModel: boolean
+  noEngineDetected: boolean
 }
 
 const ENGINES: Engine[] = ['claude', 'codex']
 const MIN_AI_WIDTH = 280
 const MAX_AI_WIDTH = 900
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`
+  if (ms < 10000) return `${(ms / 1000).toFixed(1)}s`
+  if (ms < 60000) return `${Math.round(ms / 1000)}s`
+  const min = Math.floor(ms / 60000)
+  const sec = Math.round((ms % 60000) / 1000)
+  return sec > 0 ? `${min}m ${sec}s` : `${min}m`
+}
 
 export function ChatView(props: Props): JSX.Element {
   const {
@@ -40,8 +52,20 @@ export function ChatView(props: Props): JSX.Element {
     onStop,
     onClear,
     onClearAi,
-    onSubmit
+    onSubmit,
+    needsModel,
+    noEngineDetected
   } = props
+
+  const sendBlocked = needsModel || noEngineDetected
+  const sendBlockedReason =
+    needsModel && noEngineDetected
+      ? 'Set a Whisper model and install Claude or Codex CLI first.'
+      : needsModel
+        ? 'Set a Whisper model in Settings first.'
+        : noEngineDetected
+          ? 'Neither Claude nor Codex CLI is on PATH. Install one to enable AI requests.'
+          : undefined
 
   const [width, setWidth] = useState(aiPaneWidth)
   const [dragging, setDragging] = useState(false)
@@ -49,7 +73,6 @@ export function ChatView(props: Props): JSX.Element {
   const widthRef = useRef(width)
   widthRef.current = width
 
-  // Sync external width changes (e.g., loaded from settings) when not dragging.
   useEffect(() => {
     if (!dragging) setWidth(aiPaneWidth)
   }, [aiPaneWidth, dragging])
@@ -87,7 +110,6 @@ export function ChatView(props: Props): JSX.Element {
       if (engines.length === 1) return // keep at least one selected
       onEnginesChange(engines.filter((x) => x !== e))
     } else {
-      // Preserve canonical order so the picker doesn't visually shuffle
       onEnginesChange(ENGINES.filter((x) => engines.includes(x) || x === e))
     }
   }
@@ -109,7 +131,7 @@ export function ChatView(props: Props): JSX.Element {
 
   function submit(): void {
     const text = input.trim()
-    if (!text) return
+    if (!text || sendBlocked) return
     onSubmit(text)
     setInput('')
   }
@@ -123,12 +145,10 @@ export function ChatView(props: Props): JSX.Element {
     if (e.key === 'Escape') {
       e.preventDefault()
       if (escTimerRef.current !== null) {
-        // Second ESC within the window — clear the input.
         window.clearTimeout(escTimerRef.current)
         escTimerRef.current = null
         setInput('')
       } else {
-        // First ESC — arm a short window for a follow-up press.
         escTimerRef.current = window.setTimeout(() => {
           escTimerRef.current = null
         }, 600)
@@ -161,11 +181,22 @@ export function ChatView(props: Props): JSX.Element {
 
         <div className="messages">
           {messages.length === 0 ? (
-            <div className="empty">
-              {status.running
-                ? 'Listening… start playing audio.'
-                : 'Press Start to begin transcription.'}
-            </div>
+            status.warming ? (
+              <div className="empty warmup-empty">
+                <img
+                  src={warmupImg}
+                  alt="Warming up the transcription model…"
+                  className="warmup-image"
+                />
+                <p className="warmup-caption">warming up…</p>
+              </div>
+            ) : (
+              <div className="empty">
+                {status.running
+                  ? 'Listening… start playing audio.'
+                  : 'Press Start to begin transcription.'}
+              </div>
+            )
           ) : (
             (() => {
               const cutoff = Math.max(0, messages.length - contextMessageCount)
@@ -246,7 +277,12 @@ export function ChatView(props: Props): JSX.Element {
                 />
               </label>
             </div>
-            <button className="primary" onClick={submit} disabled={!input.trim()}>
+            <button
+              className="primary"
+              onClick={submit}
+              disabled={sendBlocked || !input.trim()}
+              title={sendBlockedReason}
+            >
               Send
             </button>
           </div>
@@ -296,6 +332,12 @@ export function ChatView(props: Props): JSX.Element {
                   </span>
                   <span className="ai-time">
                     {new Date(e.at).toLocaleTimeString()}
+                    {e.endedAt !== null && (
+                      <span className="ai-duration" title="Time taken to answer">
+                        {' · '}
+                        {formatDuration(e.endedAt - e.at)}
+                      </span>
+                    )}
                   </span>
                   {e.pending && <span className="pending">thinking…</span>}
                 </header>

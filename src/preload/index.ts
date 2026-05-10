@@ -15,8 +15,17 @@ export type Settings = {
   claudeModel: string
   claudeEffort: string
   codexModel: string
+  claudeUseWsl: boolean
+  codexUseWsl: boolean
+  wslDetectionDone: boolean
   aiPaneWidth: number
   transcriptContextMessages: number
+}
+
+export type EngineDetection = { windows: boolean; wsl: boolean }
+export type DetectedEngines = {
+  claude: EngineDetection
+  codex: EngineDetection
 }
 
 export type TranscribeStatus = { running: boolean; warming: boolean }
@@ -73,7 +82,22 @@ const api = {
     ask: (engine: Engine, message: string, transcript: string): Promise<string> =>
       ipcRenderer.invoke('ai:ask', engine, message, transcript),
     cancel: (): Promise<void> => ipcRenderer.invoke('ai:cancel')
-  }
+  },
+  paths: {
+    detectedEngines: (): Promise<DetectedEngines> =>
+      ipcRenderer.invoke('paths:detectedEngines'),
+    recheckEngines: (): Promise<DetectedEngines> =>
+      ipcRenderer.invoke('paths:recheckEngines')
+  },
+  install: {
+    claude: (): Promise<number | null> => ipcRenderer.invoke('install:claude'),
+    onLog: (cb: (line: string) => void): (() => void) => {
+      const fn = (_e: unknown, p: string): void => cb(p)
+      ipcRenderer.on('install:log', fn)
+      return () => ipcRenderer.off('install:log', fn)
+    }
+  },
+  platform: process.platform as NodeJS.Platform
 }
 
 contextBridge.exposeInMainWorld('api', api)

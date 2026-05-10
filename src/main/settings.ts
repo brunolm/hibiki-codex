@@ -26,6 +26,12 @@ export type Settings = {
   claudeModel: string
   claudeEffort: string
   codexModel: string
+  // Invoke the engine through `wsl -e <engine> ...` instead of the Windows-side
+  // binary. Useful when the user installed the CLI inside their WSL distro.
+  claudeUseWsl: boolean
+  codexUseWsl: boolean
+  // One-time gate: have we already pre-applied WSL defaults based on detection?
+  wslDetectionDone: boolean
   // UI: width of the AI response panel in pixels.
   aiPaneWidth: number
   // How many latest transcript messages to include as context when sending
@@ -45,6 +51,9 @@ const defaults: Settings = {
   claudeModel: '',
   claudeEffort: '',
   codexModel: '',
+  claudeUseWsl: false,
+  codexUseWsl: false,
+  wslDetectionDone: false,
   aiPaneWidth: 480,
   transcriptContextMessages: 50
 }

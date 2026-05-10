@@ -6,6 +6,8 @@ import * as transcript from './transcript'
 import * as transcribeLoop from './transcribeLoop'
 import { warmupWhisper } from './transcribe'
 import * as ai from './ai'
+import * as aiDetect from './aiDetect'
+import * as aiInstall from './aiInstall'
 
 type NativeApi = {
   hello(name: string): string
@@ -133,6 +135,27 @@ ipcMain.handle('ai:cancel', () => {
   ai.cancel()
 })
 
+ipcMain.handle('paths:detectedEngines', () => aiDetect.detectEngines())
+ipcMain.handle('paths:recheckEngines', () => {
+  aiDetect.clearDetectionCache()
+  return aiDetect.detectEngines()
+})
+
+ipcMain.handle('install:claude', async () => {
+  return aiInstall.installClaude((line) => send('install:log', line))
+})
+
+function applyWslDefaults(): void {
+  const s = settings.get()
+  if (s.wslDetectionDone) return
+  void aiDetect.detectEngines().then((det) => {
+    const next: Partial<settings.Settings> = { wslDetectionDone: true }
+    if (!det.claude.windows && det.claude.wsl) next.claudeUseWsl = true
+    if (!det.codex.windows && det.codex.wsl) next.codexUseWsl = true
+    settings.update(next)
+  })
+}
+
 void app.whenReady().then(() => {
   settings.init()
   if (process.platform === 'win32') {
@@ -141,6 +164,7 @@ void app.whenReady().then(() => {
     app.setAppUserModelId('com.brunolm.hibikicodex')
   }
   createWindow()
+  applyWslDefaults()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
