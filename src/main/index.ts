@@ -107,7 +107,7 @@ function createWindow(): void {
   }
 
   if (s.alwaysOnTop) {
-    mainWindow.setAlwaysOnTop(true)
+    mainWindow.setAlwaysOnTop(true, 'screen-saver')
   }
 
   if (process.env['ELECTRON_RENDERER_URL']) {
@@ -159,7 +159,7 @@ ipcMain.handle('settings:save', (_e, next: Partial<settings.Settings>) =>
 
 ipcMain.handle('window:setAlwaysOnTop', (_e, on: boolean) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setAlwaysOnTop(on)
+    mainWindow.setAlwaysOnTop(on, 'screen-saver')
   }
   settings.update({ alwaysOnTop: on })
 })
