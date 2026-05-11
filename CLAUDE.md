@@ -1,0 +1,3 @@
+- When making changes in `docs/`, update `index.source.html` and never `index.html` directly. `index.html` is compiled. After making changes run `bun docs:build`
+- When asked to commit, check if any changes were made in `docs/`
+  - if changes were made: run `bun docs:build`
