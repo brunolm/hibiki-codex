@@ -160,6 +160,76 @@ export function App(): JSX.Element {
     setMessages([])
   }
 
+  async function loadTranscript(): Promise<void> {
+    if (
+      messages.length > 0 &&
+      !window.confirm('Replace the current transcript with the file contents?')
+    ) {
+      return
+    }
+    let result: { path: string; content: string } | null
+    try {
+      result = await window.api.transcribe.open()
+    } catch (err) {
+      setNotice((err as Error).message)
+      return
+    }
+    if (!result) return
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const dayStart = today.getTime()
+    const lineRe = /^\s*\[(\d{1,2}):(\d{2}):(\d{2})\]\s?(.*)$/
+    const lines = result.content.split(/\r?\n/)
+    const parsed: TranscriptMessage[] = []
+    for (let i = 0; i < lines.length; i++) {
+      const raw = lines[i] ?? ''
+      if (raw.trim() === '') continue
+      const m = raw.match(lineRe)
+      let at: number
+      let text: string
+      if (m) {
+        const h = Number(m[1])
+        const mi = Number(m[2])
+        const se = Number(m[3])
+        at = dayStart + ((h * 60 + mi) * 60 + se) * 1000
+        text = (m[4] ?? '').trim()
+      } else {
+        at = dayStart + i
+        text = raw.trim()
+      }
+      if (text === '') continue
+      parsed.push({
+        id: `loaded-${i}-${Math.random().toString(36).slice(2, 8)}`,
+        text,
+        at
+      })
+    }
+    await window.api.transcribe.clear()
+    setMessages(parsed)
+    setNotice(`Loaded ${parsed.length} message${parsed.length === 1 ? '' : 's'} from ${result.path}`)
+  }
+
+  async function saveTranscript(): Promise<void> {
+    if (messages.length === 0) return
+    const pad = (n: number): string => String(n).padStart(2, '0')
+    const formatTime = (ms: number): string => {
+      const d = new Date(ms)
+      return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+    }
+    const content = messages.map((m) => `[${formatTime(m.at)}] ${m.text}`).join('\r\n')
+    const now = new Date()
+    const stamp =
+      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+      `_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    const defaultName = `transcript-${stamp}.txt`
+    try {
+      const path = await window.api.transcribe.save(content, defaultName)
+      if (path) setNotice(`Saved transcript to ${path}`)
+    } catch (err) {
+      setNotice((err as Error).message)
+    }
+  }
+
   const needsExe = !settings?.whisperExe
   const needsModel = !settings?.whisperModel
   const claudeUsable = settings
@@ -339,6 +409,8 @@ export function App(): JSX.Element {
           onStart={startTranscribe}
           onStop={stopTranscribe}
           onClear={clearTranscript}
+          onSave={saveTranscript}
+          onLoad={loadTranscript}
           onClearAi={() => setExchanges([])}
           onSubmit={submitPrompt}
           needsModel={needsModel}

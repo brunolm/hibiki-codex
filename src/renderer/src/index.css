@@ -256,9 +256,49 @@ textarea {
   font-weight: 600;
   color: var(--text);
 }
+.pane-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
 .pane-actions {
   display: flex;
   gap: 0.4rem;
+  align-items: center;
+}
+
+.icon-button-group {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 120ms, background 120ms;
+}
+.icon-button + .icon-button {
+  border-left: 1px solid var(--border);
+}
+.icon-button:hover:not(:disabled) {
+  color: var(--text);
+  background: #2c2c33;
+}
+.icon-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .messages {

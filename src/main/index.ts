@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, screen } from 'electron'
 import { existsSync } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as settings from './settings'
 import * as audio from './audio'
@@ -210,6 +210,46 @@ ipcMain.handle('transcribe:stop', () => {
 ipcMain.handle('transcribe:clear', () => {
   transcript.clear()
 })
+
+ipcMain.handle('transcribe:open', async () => {
+  const opts: Electron.OpenDialogOptions = {
+    title: 'Open transcript',
+    properties: ['openFile'],
+    filters: [
+      { name: 'Text', extensions: ['txt'] },
+      { name: 'All files', extensions: ['*'] }
+    ]
+  }
+  const result =
+    mainWindow && !mainWindow.isDestroyed()
+      ? await dialog.showOpenDialog(mainWindow, opts)
+      : await dialog.showOpenDialog(opts)
+  if (result.canceled || result.filePaths.length === 0) return null
+  const path = result.filePaths[0]!
+  const content = await readFile(path, 'utf8')
+  return { path, content }
+})
+
+ipcMain.handle(
+  'transcribe:save',
+  async (_e, content: string, defaultName: string) => {
+    const opts = {
+      title: 'Save transcript',
+      defaultPath: defaultName,
+      filters: [
+        { name: 'Text', extensions: ['txt'] },
+        { name: 'All files', extensions: ['*'] }
+      ]
+    }
+    const result =
+      mainWindow && !mainWindow.isDestroyed()
+        ? await dialog.showSaveDialog(mainWindow, opts)
+        : await dialog.showSaveDialog(opts)
+    if (result.canceled || !result.filePath) return null
+    await writeFile(result.filePath, content, 'utf8')
+    return result.filePath
+  }
+)
 
 ipcMain.handle(
   'ai:ask',

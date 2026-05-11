@@ -18,6 +18,8 @@ type Props = {
   onStart: () => void
   onStop: () => void
   onClear: () => void
+  onSave: () => void
+  onLoad: () => void
   onClearAi: () => void
   onSubmit: (prompt: string) => void
   needsModel: boolean
@@ -51,6 +53,8 @@ export function ChatView(props: Props): JSX.Element {
     onStart,
     onStop,
     onClear,
+    onSave,
+    onLoad,
     onClearAi,
     onSubmit,
     needsModel,
@@ -164,7 +168,56 @@ export function ChatView(props: Props): JSX.Element {
     >
       <section className="chat-pane">
         <div className="pane-header">
-          <h2>Live transcript</h2>
+          <div className="pane-title">
+            <h2>Live transcript</h2>
+            <div className="icon-button-group" role="group" aria-label="Transcript file actions">
+              <button
+                type="button"
+                className="icon-button"
+                onClick={onLoad}
+                title="Open transcript from file"
+                aria-label="Open transcript"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={onSave}
+                disabled={messages.length === 0}
+                title="Save transcript to file"
+                aria-label="Save transcript"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+                  <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+                  <path d="M7 3v4a1 1 0 0 0 1 1h7" />
+                </svg>
+              </button>
+            </div>
+          </div>
           <div className="pane-actions">
             {status.running ? (
               <button onClick={onStop}>Stop</button>

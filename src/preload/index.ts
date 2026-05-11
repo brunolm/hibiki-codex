@@ -95,6 +95,10 @@ const api = {
     start: (): Promise<void> => ipcRenderer.invoke('transcribe:start'),
     stop: (): Promise<void> => ipcRenderer.invoke('transcribe:stop'),
     clear: (): Promise<void> => ipcRenderer.invoke('transcribe:clear'),
+    save: (content: string, defaultName: string): Promise<string | null> =>
+      ipcRenderer.invoke('transcribe:save', content, defaultName),
+    open: (): Promise<{ path: string; content: string } | null> =>
+      ipcRenderer.invoke('transcribe:open'),
     onLine: (cb: (line: TranscribeLine) => void): (() => void) => {
       const fn = (_e: unknown, p: TranscribeLine): void => cb(p)
       ipcRenderer.on('transcribe:line', fn)
