@@ -49,15 +49,20 @@
 
     <meta name="theme-color" content="#0a0716" />
 
-    <link
-      rel="preconnect"
-      href="https://fonts.googleapis.com"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      media="print"
+      onload="this.onload=null;this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      />
+    </noscript>
 
     <style>
       :root {
@@ -786,6 +791,7 @@
       </div>
     </header>
 
+    <main>
     <section class="hero" style="border-top: 0">
       <div class="container">
         <img class="hibiki-figure" src="hibiki.webp" alt="" aria-hidden="true" />
@@ -818,6 +824,7 @@
             class="active"
             src="example-1.webp"
             alt="Hibiki Codex with a Japanese Shadow Garden quote in the transcript and a prompt being typed"
+            fetchpriority="high"
           />
           <img
             src="example-2.png"
@@ -891,11 +898,12 @@
             <div class="usecase-image">
               <video
                 src="example-quote.mp4"
-                autoplay
+                poster="example-quote-poster.webp"
+                controls
                 muted
                 loop
                 playsinline
-                preload="metadata"
+                preload="none"
                 aria-label="An anime quote is captured in the transcript; the AI panel breaks down the grammar, romaji, and translation."
               ></video>
             </div>
@@ -914,11 +922,12 @@
             <div class="usecase-image">
               <video
                 src="example-factcheck.mp4"
-                autoplay
+                poster="example-factcheck-poster.webp"
+                controls
                 muted
                 loop
                 playsinline
-                preload="metadata"
+                preload="none"
                 aria-label="A streamer's claim appears in the transcript; the AI panel verifies it with corroborating details."
               ></video>
             </div>
@@ -937,11 +946,12 @@
             <div class="usecase-image">
               <video
                 src="example-meetings.mp4"
-                autoplay
+                poster="example-meetings-poster.webp"
+                controls
                 muted
                 loop
                 playsinline
-                preload="metadata"
+                preload="none"
                 aria-label="A meeting transcript scrolls past while the AI panel summarises action items and decisions."
               ></video>
             </div>
@@ -960,11 +970,12 @@
             <div class="usecase-image">
               <video
                 src="example-techtalks.mp4"
-                autoplay
+                poster="example-techtalks-poster.webp"
+                controls
                 muted
                 loop
                 playsinline
-                preload="metadata"
+                preload="none"
                 aria-label="A tech talk plays; the transcript captures a technical claim and the AI panel expands on it with a deeper explanation."
               ></video>
             </div>
@@ -1200,6 +1211,7 @@ bun run dev</pre>
         </p>
       </div>
     </section>
+    </main>
 
     <div class="modal" hidden role="dialog" aria-modal="true" aria-label="Screenshot preview">
       <button class="modal-close" type="button" aria-label="Close">×</button>
