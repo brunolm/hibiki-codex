@@ -392,7 +392,8 @@
       .modal[hidden] {
         display: none;
       }
-      .modal-img {
+      .modal-img,
+      .modal-video {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
@@ -402,6 +403,9 @@
           0 0 0 1px rgba(124, 77, 255, 0.4),
           0 0 80px -10px rgba(124, 77, 255, 0.3);
         cursor: default;
+      }
+      .modal-video {
+        background: var(--bg-elev);
       }
       .modal-close {
         position: absolute;
@@ -514,13 +518,33 @@
         justify-content: center;
         overflow: hidden;
       }
-      .usecase-image img {
+      .usecase-image img,
+      .usecase-image video {
         width: 100%;
         height: 100%;
         object-fit: cover;
         object-position: top center;
         cursor: zoom-in;
         display: block;
+        background: var(--bg);
+      }
+      /* The cover/top-center rules above keep the video framed nicely in the
+         16:10 thumbnail. But native fullscreen (and the browser controls'
+         fullscreen button) keeps applying them, which crops the bottom when
+         the video isn't 16:10. Reset to contain + centered in fullscreen. */
+      video:fullscreen {
+        object-fit: contain;
+        object-position: center center;
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      video:-webkit-full-screen {
+        object-fit: contain;
+        object-position: center center;
+        width: 100%;
+        height: 100%;
+        background: #000;
       }
       .usecase-body {
         padding: 22px 24px;
@@ -856,16 +880,17 @@
           from. Two flows that come up a lot:
         </p>
         <div class="usecases">
-          <!-- TODO: replace each use-case image with a tailored screenshot.
-               Until then, the missing files fall back to example-1.png so
-               every card stays clickable and the modal works end-to-end. -->
           <article class="usecase">
             <div class="usecase-image">
-              <img
-                src="example-quote.png"
-                alt="An anime quote is captured in the transcript; the AI panel breaks down the grammar, romaji, and translation."
-                onerror="this.onerror=null; this.src='example-1.png';"
-              />
+              <video
+                src="example-quote.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-label="An anime quote is captured in the transcript; the AI panel breaks down the grammar, romaji, and translation."
+              ></video>
             </div>
             <div class="usecase-body">
               <div class="tag">Anime · VN · drama</div>
@@ -880,11 +905,15 @@
           </article>
           <article class="usecase">
             <div class="usecase-image">
-              <img
-                src="example-factcheck.png"
-                alt="A streamer's claim appears in the transcript; the AI panel verifies it with corroborating details."
-                onerror="this.onerror=null; this.src='example-2.png';"
-              />
+              <video
+                src="example-factcheck.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-label="A streamer's claim appears in the transcript; the AI panel verifies it with corroborating details."
+              ></video>
             </div>
             <div class="usecase-body">
               <div class="tag">Streams · podcasts · news</div>
@@ -899,11 +928,15 @@
           </article>
           <article class="usecase">
             <div class="usecase-image">
-              <img
-                src="example-meetings.png"
-                alt="A meeting transcript scrolls past while the AI panel summarises action items and decisions."
-                onerror="this.onerror=null; this.src='example-3.png';"
-              />
+              <video
+                src="example-meetings.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-label="A meeting transcript scrolls past while the AI panel summarises action items and decisions."
+              ></video>
             </div>
             <div class="usecase-body">
               <div class="tag">Standups · 1:1s · client calls</div>
@@ -918,11 +951,15 @@
           </article>
           <article class="usecase">
             <div class="usecase-image">
-              <img
-                src="example-techtalks.png"
-                alt="A tech talk plays; the transcript captures a technical claim and the AI panel expands on it with a deeper explanation."
-                onerror="this.onerror=null; this.src='example-1.png';"
-              />
+              <video
+                src="example-techtalks.mp4"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                aria-label="A tech talk plays; the transcript captures a technical claim and the AI panel expands on it with a deeper explanation."
+              ></video>
             </div>
             <div class="usecase-body">
               <div class="tag">Conferences · tutorials · lectures</div>
@@ -1160,6 +1197,7 @@ bun run dev</pre>
     <div class="modal" hidden role="dialog" aria-modal="true" aria-label="Screenshot preview">
       <button class="modal-close" type="button" aria-label="Close">×</button>
       <img class="modal-img" src="" alt="" />
+      <video class="modal-video" controls preload="metadata" playsinline hidden></video>
     </div>
 
     <script>
@@ -1172,7 +1210,22 @@ bun run dev</pre>
         );
         const modal = document.querySelector('.modal');
         const modalImg = modal.querySelector('.modal-img');
+        const modalVideo = modal.querySelector('.modal-video');
         const modalClose = modal.querySelector('.modal-close');
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // If the user prefers reduced motion, stop the auto-looping inline
+        // videos and surface native controls so they can opt in manually.
+        if (reduceMotion) {
+          document
+            .querySelectorAll('.usecase-image video, .config-image video')
+            .forEach((v) => {
+              v.autoplay = false;
+              v.removeAttribute('autoplay');
+              v.pause();
+              v.controls = true;
+            });
+        }
 
         let current = 0;
         let timer = null;
@@ -1210,9 +1263,22 @@ bun run dev</pre>
         });
 
         // Modal
-        function openModal(src, alt) {
-          modalImg.src = src;
-          modalImg.alt = alt || '';
+        function openModal(src, alt, type) {
+          if (type === 'video') {
+            modalImg.hidden = true;
+            modalImg.removeAttribute('src');
+            modalVideo.hidden = false;
+            modalVideo.src = src;
+            modalVideo.setAttribute('aria-label', alt || '');
+            modalVideo.play().catch(() => {});
+          } else {
+            modalVideo.hidden = true;
+            modalVideo.pause();
+            modalVideo.removeAttribute('src');
+            modalImg.hidden = false;
+            modalImg.src = src;
+            modalImg.alt = alt || '';
+          }
           modal.hidden = false;
           document.body.style.overflow = 'hidden';
           stopTimer();
@@ -1220,15 +1286,24 @@ bun run dev</pre>
         function closeModal() {
           modal.hidden = true;
           document.body.style.overflow = '';
+          modalVideo.pause();
+          modalVideo.removeAttribute('src');
           startTimer();
         }
         images.forEach((img) =>
-          img.addEventListener('click', () => openModal(img.src, img.alt))
+          img.addEventListener('click', () => openModal(img.src, img.alt, 'image'))
         );
         document
           .querySelectorAll('.usecase-image img, .config-image img')
           .forEach((img) =>
-            img.addEventListener('click', () => openModal(img.src, img.alt))
+            img.addEventListener('click', () => openModal(img.src, img.alt, 'image'))
+          );
+        document
+          .querySelectorAll('.usecase-image video, .config-image video')
+          .forEach((v) =>
+            v.addEventListener('click', () =>
+              openModal(v.currentSrc || v.src, v.getAttribute('aria-label'), 'video')
+            )
           );
         modalClose.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
