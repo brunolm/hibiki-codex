@@ -1692,6 +1692,29 @@ bun run dev</pre>
         });
       })();
 
+      // Easter egg — typing "iamatomic" outside an editable field plays a
+      // short audio clip. The Audio element is lazily constructed on first
+      // match (saves a network request for visitors who never trigger it).
+      (function () {
+        var SECRET = 'iamatomic';
+        var buffer = '';
+        var audio = null;
+        document.addEventListener('keydown', function (e) {
+          var t = e.target;
+          if (t && t.closest && t.closest('input, textarea, [contenteditable=""], [contenteditable=true]')) return;
+          if (!e.key || e.key.length !== 1) return;
+          buffer = (buffer + e.key.toLowerCase()).slice(-SECRET.length);
+          if (buffer === SECRET) {
+            buffer = '';
+            if (!audio) audio = new Audio('iamatomic.webm');
+            try {
+              audio.currentTime = 0;
+              audio.play();
+            } catch (err) {}
+          }
+        });
+      })();
+
       // Theme toggle — flips dark ↔ light, persists in localStorage, and
       // updates the button's aria-label. Active icon / label are picked by
       // CSS via [data-theme] selectors on <html>. The site default is dark;
