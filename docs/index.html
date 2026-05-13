@@ -103,6 +103,7 @@
         --header-bg: rgba(10, 7, 22, 0.78);
         --drawer-bg: rgba(10, 7, 22, 0.97);
         --code-comment: #9a8cbe;  /* ~6:1 on --bg-elev in dark (WCAG AA) */
+        --btn-fg: #1a1124;        /* dark text on gold CTA in dark mode */
         --grad-purple: rgba(124, 77, 255, 0.22);
         --grad-purple-soft: rgba(165, 138, 255, 0.08);
         --grad-gold: rgba(212, 172, 79, 0.05);
@@ -121,25 +122,28 @@
          OS prefers-color-scheme is intentionally ignored so the site looks
          the same to everyone by default. */
       :root[data-theme='light'] {
+        /* Light palette — Symphogear: near-white cream, vivid red,
+           gold demoted to a secondary highlight. */
         color-scheme: light;
-        --bg: #f7f1e3;
-        --bg-elev: #ede4cd;
-        --bg-elev-2: #e1d4b3;
-        --ink: #1d1739;
-        --ink-dim: #4a3f6e;
-        --ink-faint: #8a7faa;
-        --accent: #8a6515;
-        --accent-soft: #a07a1c;
-        --gold: #8a6515;
-        --glow: #6b3df0;
-        --glow-soft: #8e6dff;
-        --border: #d4c39a;
-        --header-bg: rgba(247, 241, 227, 0.82);
-        --drawer-bg: rgba(247, 241, 227, 0.97);
+        --bg: #fbf6ec;
+        --bg-elev: #f5ecd6;
+        --bg-elev-2: #ecdfbf;
+        --ink: #1c1124;
+        --ink-dim: #534150;
+        --ink-faint: #8e7d92;
+        --accent: #c83330;       /* Symphogear red — primary */
+        --accent-soft: #a01f1d;  /* darker red — hover + code keywords (AA) */
+        --gold: #c89530;          /* warm gold — secondary accent */
+        --glow: #c83330;          /* red glow replaces the purple aura */
+        --glow-soft: #ec6664;
+        --border: #e6d4ad;
+        --header-bg: rgba(251, 246, 236, 0.84);
+        --drawer-bg: rgba(251, 246, 236, 0.97);
         --code-comment: #5d527a;  /* ~5.6:1 on --bg-elev in light (WCAG AA) */
-        --grad-purple: rgba(124, 77, 255, 0.10);
-        --grad-purple-soft: rgba(165, 138, 255, 0.04);
-        --grad-gold: rgba(138, 101, 21, 0.06);
+        --grad-purple: rgba(200, 48, 46, 0.07);
+        --grad-purple-soft: rgba(236, 102, 100, 0.04);
+        --grad-gold: rgba(200, 148, 31, 0.05);
+        --btn-fg: #ffffff;
       }
 
       * {
@@ -221,7 +225,7 @@
         border-radius: 8px;
         object-fit: cover;
         display: block;
-        box-shadow: 0 0 16px -2px rgba(124, 77, 255, 0.4);
+        box-shadow: 0 0 16px -2px color-mix(in oklab, var(--glow) 40%, transparent);
       }
       .brand .name {
         font-size: 26px;
@@ -445,6 +449,25 @@
           max-width: 90%;
         }
       }
+      /* Theme-aware hero illustration: dark uses the additive ghost-figure
+         (screen blend + 0.6 opacity on the dark canvas); light swaps to a
+         brighter watercolor variant that sits on the cream bg via multiply. */
+      .hibiki-figure-light {
+        display: none;
+      }
+      :root[data-theme='light'] .hibiki-figure-dark {
+        display: none;
+      }
+      :root[data-theme='light'] .hibiki-figure-light {
+        display: block;
+        mix-blend-mode: multiply;
+        opacity: 0.92;
+      }
+      @media (max-width: 760px) {
+        :root[data-theme='light'] .hibiki-figure-light {
+          opacity: 0.5;
+        }
+      }
       .hero .kanji-mark {
         font-family: var(--serif);
         font-size: 96px;
@@ -498,12 +521,12 @@
       }
       .btn-primary {
         background: var(--accent);
-        color: #1a1124;
-        box-shadow: 0 0 24px rgba(212, 172, 79, 0.25);
+        color: var(--btn-fg);
+        box-shadow: 0 0 24px color-mix(in oklab, var(--accent) 25%, transparent);
       }
       .btn-primary:hover {
         background: var(--accent-soft);
-        color: #1a1124;
+        color: var(--btn-fg);
       }
       .btn-secondary {
         background: transparent;
@@ -541,12 +564,12 @@
         0%,
         100% {
           box-shadow:
-            0 0 24px rgba(212, 172, 79, 0.25),
+            0 0 24px color-mix(in oklab, var(--accent) 25%, transparent),
             0 0 0 0 color-mix(in oklab, var(--accent) 45%, transparent);
         }
         50% {
           box-shadow:
-            0 0 24px rgba(212, 172, 79, 0.25),
+            0 0 24px color-mix(in oklab, var(--accent) 25%, transparent),
             0 0 0 6px color-mix(in oklab, var(--accent) 0%, transparent);
         }
       }
@@ -1064,11 +1087,19 @@
     <section class="hero" style="border-top: 0">
       <div class="container">
         <img
-          class="hibiki-figure"
+          class="hibiki-figure hibiki-figure-dark"
           src="hibiki.webp"
           alt=""
           aria-hidden="true"
           fetchpriority="high"
+          decoding="async"
+        />
+        <img
+          class="hibiki-figure hibiki-figure-light"
+          src="hibiki-light.png"
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
           decoding="async"
         />
         <div class="kanji-mark">響</div>
