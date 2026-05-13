@@ -1,3 +1,2 @@
-- When making changes in `docs/`, update `index.source.html` and never `index.html` directly. `index.html` is compiled. After making changes run `bun docs:build`
-- When asked to commit, check if any changes were made in `docs/`
-  - if changes were made: run `bun docs:build`
+- `docs/` is the source for the GitHub Pages site. Edit `docs/index.html` directly. On push to `main`, `.github/workflows/deploy.yml` runs `bun run docs:build`, which minifies `docs/index.html` into `dist/index.html` and mirrors the rest of `docs/` (images, videos, CNAME) into `dist/` for deployment.
+- For local dev with hot-reload, run `bun run docs:serve` (uses Bun's HTML bundler with HMR).

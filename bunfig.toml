@@ -1,0 +1,12 @@
+[install]
+# Refuse to install any package version published less than 3 days ago.
+# Mitigates supply-chain risk windows (e.g. the TanStack incident: a malicious
+# version was published and yanked within hours — a release-age floor would
+# have blocked installs while the window was still open).
+minimumReleaseAge = 259200
+
+# Always pin exact versions in lockfiles; never silently accept ranges.
+exact = true
+
+# Verify package integrity from the lockfile.
+frozenLockfile = false

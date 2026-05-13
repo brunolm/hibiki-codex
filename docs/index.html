@@ -1,4 +1,1465 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width,initial-scale=1" name="viewport"><title>Hibiki Codex — live system-audio transcription with an AI sidekick</title><meta content="Windows desktop app that captures system audio, transcribes it locally with whisper.cpp, then lets you ask Claude or Codex about what you just heard." name="description"><link href="app-icon.webp" rel="icon" type="image/webp"><link href="app-icon.png" rel="apple-touch-icon"><link href="https://hibikicodex.com/" rel="canonical"><meta content="Hibiki Codex — a wise codex of what your computer just heard" property="og:title"><meta content="Live system-audio transcription with an AI sidekick. Capture, transcribe, and ask Claude or Codex what your computer just heard." property="og:description"><meta content="website" property="og:type"><meta content="https://hibikicodex.com/" property="og:url"><meta content="Hibiki Codex" property="og:site_name"><meta content="en_US" property="og:locale"><meta content="https://hibikicodex.com/opengraph.png" property="og:image"><meta content="https://hibikicodex.com/opengraph.png" property="og:image:secure_url"><meta content="image/png" property="og:image:type"><meta content="1536" property="og:image:width"><meta content="1024" property="og:image:height"><meta content="Hibiki Codex card — title 'Hibiki Codex' and tagline 'Live system-audio transcription with an AI sidekick' over an illustration of Hibiki holding her glowing codex. Capture · Transcribe · Ask." property="og:image:alt"><meta content="summary_large_image" name="twitter:card"><meta content="@BrunoLM7" name="twitter:site"><meta content="@BrunoLM7" name="twitter:creator"><meta content="Hibiki Codex — a wise codex of what your computer just heard" name="twitter:title"><meta content="Capture system audio, transcribe it locally with whisper.cpp, and ask Claude or Codex what your computer just heard." name="twitter:description"><meta content="https://hibikicodex.com/opengraph.png" name="twitter:image"><meta content="Hibiki Codex card — title 'Hibiki Codex' and tagline 'Live system-audio transcription with an AI sidekick' over an illustration of Hibiki holding her glowing codex. Capture · Transcribe · Ask." name="twitter:image:alt"><meta content="#0a0716" name="theme-color"><link href="https://fonts.googleapis.com" rel="preconnect"><link href="https://fonts.gstatic.com" rel="preconnect" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload='this.onload=null,this.media="all"'><noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript><style>:root{--bg:#0a0716;--bg-elev:#15102a;--bg-elev-2:#1d1739;--ink:#ece5f5;--ink-dim:#a499c3;--ink-faint:#6c5e8c;--accent:#d4ac4f;--accent-soft:#e8c668;--gold:#d4ac4f;--glow:#7c4dff;--glow-soft:#a58aff;--border:#2b2257;--radius:10px;--max-w:1080px;--sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;--serif:'Noto Serif JP',Georgia,serif;--mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace}*{box-sizing:border-box}body,html{margin:0;padding:0}body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background-image:radial-gradient(ellipse 70% 50% at 80% -5%,rgba(124,77,255,.22),transparent 60%),radial-gradient(ellipse 60% 40% at 5% 20%,rgba(165,138,255,.08),transparent 65%),radial-gradient(ellipse 80% 40% at 50% 100%,rgba(212,172,79,.05),transparent 70%)}a{color:var(--accent-soft);text-decoration:none}a:hover{color:var(--accent)}.container{max-width:var(--max-w);margin:0 auto;padding:0 24px}header{position:sticky;top:0;z-index:100;padding:16px 0;background:rgba(10,7,22,.78);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid var(--border)}header .container{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:14px;font-weight:600;letter-spacing:.01em}.brand-icon{width:38px;height:38px;border-radius:8px;object-fit:cover;display:block;box-shadow:0 0 16px -2px rgba(124,77,255,.4)}.brand .name{font-size:26px;line-height:1.1}nav a{margin-left:28px;color:var(--ink-dim);font-size:16px;display:inline-flex;align-items:center;vertical-align:middle}nav a:hover{color:var(--ink)}nav a.icon-link svg{width:22px;height:22px;display:block;fill:currentColor}.hero{padding:96px 0 80px;text-align:center;position:relative;overflow:hidden}.hero .container{position:relative;z-index:1}.hero .container>:not(.hibiki-figure){position:relative;z-index:1}.hibiki-figure{position:absolute;top:-40px;right:-120px;width:520px;max-width:55%;height:auto;opacity:.6;mix-blend-mode:screen;pointer-events:none;z-index:0;-webkit-mask-image:radial-gradient(ellipse 65% 75% at 50% 45%,#000 30%,transparent 78%);mask-image:radial-gradient(ellipse 65% 75% at 50% 45%,#000 30%,transparent 78%)}@media (max-width:760px){.hibiki-figure{opacity:.3;right:-10%;width:90%;max-width:90%}}.hero .kanji-mark{font-family:var(--serif);font-size:96px;color:var(--accent);line-height:1;margin-bottom:12px;text-shadow:0 0 40px rgba(212,172,79,.35),0 0 80px rgba(124,77,255,.25)}.hero .pronounce{color:var(--ink-dim);font-size:14px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:28px}.hero h1{font-size:clamp(32px, 5vw, 52px);font-weight:700;letter-spacing:-.02em;line-height:1.15;text-wrap:balance;margin:0 0 16px}.hero .tagline{font-size:clamp(16px, 2vw, 20px);color:var(--ink-dim);max-width:640px;margin:0 auto 40px}.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 26px;border-radius:var(--radius);font-weight:500;font-size:17px;transition:background .15s,border-color .15s,transform .15s;border:1px solid transparent}.btn-primary{background:var(--accent);color:#1a1124;box-shadow:0 0 24px rgba(212,172,79,.25)}.btn-primary:hover{background:var(--accent-soft);color:#1a1124}.btn-secondary{background:0 0;color:var(--ink);border-color:var(--border)}.btn-secondary:hover{border-color:var(--ink-dim);color:var(--ink)}.showcase{position:relative;margin:64px auto 0;max-width:880px;aspect-ratio:884/645;border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:0 30px 80px -20px rgba(0,0,0,.7),0 0 1px rgba(124,77,255,.35),0 0 80px -10px rgba(124,77,255,.22);background:var(--bg-elev)}.showcase img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .5s ease-in-out;cursor:zoom-in}.showcase img.active{opacity:1}.showcase-steps{display:flex;justify-content:center;gap:8px;margin-top:18px;flex-wrap:wrap}.showcase-steps .step{background:0 0;border:1px solid var(--border);color:var(--ink-faint);padding:8px 18px;border-radius:999px;font-family:var(--sans);font-size:16px;letter-spacing:.04em;cursor:pointer;transition:background .15s,color .15s,border-color .15s}.showcase-steps .step:hover{color:var(--ink-dim);border-color:var(--ink-faint)}.showcase-steps .step.active{background:rgba(212,172,79,.12);color:var(--accent);border-color:var(--accent);box-shadow:0 0 24px -4px rgba(212,172,79,.35)}.showcase-steps .step .num{font-family:var(--serif);margin-right:8px;opacity:.7}.modal{position:fixed;inset:0;background:rgba(10,7,22,.92);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:32px;z-index:1000;cursor:zoom-out;animation:modal-fade-in .2s ease-out}.modal[hidden]{display:none}.modal-img,.modal-video{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(124,77,255,.4),0 0 80px -10px rgba(124,77,255,.3);cursor:default}.modal-video{background:var(--bg-elev)}.modal-close{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;background:rgba(15,10,30,.7);color:var(--ink);border:1px solid var(--border);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--sans)}.modal-close:hover{background:rgba(30,20,50,.85);border-color:var(--ink-faint)}@keyframes modal-fade-in{from{opacity:0}to{opacity:1}}@media (prefers-reduced-motion:reduce){.modal,.showcase img{transition:none;animation:none}}section{padding:80px 0;border-top:1px solid var(--border)}section h2{font-size:clamp(24px, 3.5vw, 34px);margin:0 0 12px;letter-spacing:-.01em;line-height:1.2;text-wrap:balance}section .lead{color:var(--ink-dim);margin:0 0 48px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}@media (max-width:760px){.grid-3{grid-template-columns:1fr}}.card{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:24px}.card .step{font-family:var(--serif);color:var(--accent);font-size:22px;margin-bottom:10px;line-height:1}.usecases{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}@media (max-width:760px){.usecases{grid-template-columns:1fr}}.usecase{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:border-color 160ms,box-shadow 160ms,transform 160ms}.usecase:hover{border-color:rgba(212,172,79,.55);box-shadow:0 12px 32px -16px rgba(0,0,0,.6),0 0 0 1px rgba(212,172,79,.18),0 0 40px -8px rgba(124,77,255,.18);transform:translateY(-2px)}.usecase-image{background:var(--bg);border-bottom:1px solid var(--border);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;overflow:hidden}.usecase-image img,.usecase-image video{width:100%;height:100%;object-fit:cover;object-position:top center;cursor:zoom-in;display:block;background:var(--bg)}video:fullscreen{object-fit:contain;object-position:center center;width:100%;height:100%;background:#000}video:-webkit-full-screen{object-fit:contain;object-position:center center;width:100%;height:100%;background:#000}.usecase-body{padding:22px 24px}.usecase-body .tag{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:8px}.usecase-body h3{margin:0 0 8px;font-size:19px;line-height:1.3}.usecase-body p{margin:0;color:var(--ink-dim);font-size:14px;line-height:1.55}.configure{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}.config-card{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;transition:border-color 160ms,box-shadow 160ms,transform 160ms}.config-card:hover{border-color:rgba(212,172,79,.55);box-shadow:0 10px 28px -16px rgba(0,0,0,.6),0 0 0 1px rgba(212,172,79,.18),0 0 30px -8px rgba(124,77,255,.18);transform:translateY(-2px)}.config-image{background:var(--bg);border-bottom:1px solid var(--border);aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;overflow:hidden}.config-image img{width:100%;height:100%;object-fit:cover;object-position:top center;cursor:zoom-in;display:block}.config-body{padding:16px 18px 20px;display:flex;flex-direction:column;gap:6px}.config-body .step-num{font-family:var(--serif);color:var(--accent);font-size:22px;line-height:1}.config-body h3{margin:0;font-size:16px;line-height:1.3}.config-body p{margin:0;color:var(--ink-dim);font-size:13.5px;line-height:1.5}.platform-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.platform-head h3{margin:0}.status{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em;padding:4px 10px;border-radius:999px;white-space:nowrap}.status-ok{background:rgba(212,172,79,.16);color:var(--accent);border:1px solid var(--accent)}.status-maybe{background:rgba(108,94,140,.12);color:var(--ink-faint);border:1px dashed var(--ink-faint)}.card.platform.maybe{opacity:.85}.requires{display:flex;gap:16px;align-items:flex-start;padding:16px 20px;margin:0 0 24px;border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius);background:rgba(212,172,79,.05);font-size:14px;color:var(--ink)}.requires-label{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);white-space:nowrap;padding-top:2px}.requires p{margin:0;color:var(--ink-dim)}.requires p+p{margin-top:6px}.card h3{margin:0 0 8px;font-size:18px}.card p{margin:0;color:var(--ink-dim);font-size:14px}.stack{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.chip{font-family:var(--mono);font-size:12px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);color:var(--ink-dim);background:var(--bg-elev)}pre{background:var(--bg-elev);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;overflow-x:auto;font-family:var(--mono);font-size:14px;line-height:1.7;color:var(--ink);margin:0}pre .c{color:var(--ink-faint)}pre .k{color:var(--accent-soft)}footer{padding:40px 0 60px;border-top:1px solid var(--border);color:var(--ink-faint);font-size:14px;text-align:center}footer a{color:var(--ink-dim)}footer a:hover{color:var(--ink)}</style></head><body><header><div class="container"><div class="brand"><img alt="" src="app-icon.webp" class="brand-icon"> <span class="name">Hibiki Codex</span></div><nav><a href="#how">How it works</a> <a href="#use-cases">Use cases</a> <a href="#configure">Configure</a> <a href="#setup">Setup</a> <a href="https://github.com/BrunoLM/hibiki-codex" class="icon-link" aria-label="GitHub repository" title="GitHub"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></nav></div></header><main><section class="hero" style="border-top:0"><div class="container"><img alt="" src="hibiki.webp" class="hibiki-figure" aria-hidden="true"><div class="kanji-mark">響</div><div class="pronounce">hi · bi · ki — echo, resonance</div><h1>A wise codex of what your computer just heard</h1><p class="tagline">Hibiki Codex captures your system audio, transcribes it locally with whisper.cpp (auto-detect, Japanese, or English), and lets you ask Claude or Codex about what you've been hearing — all in one Windows desktop app. Whisper runtime + model are downloaded in-app on first launch.</p><div class="cta"><a href="https://github.com/BrunoLM/hibiki-codex/releases/latest" class="btn btn-primary">Download for Windows ↓</a> <a href="https://github.com/BrunoLM/hibiki-codex" class="btn btn-secondary">View on GitHub →</a> <a href="#setup" class="btn btn-secondary">Build from source</a></div><div class="showcase" aria-label="Hibiki Codex screenshots: ask, think, answer"><img alt="Hibiki Codex with a Japanese Shadow Garden quote in the transcript and a prompt being typed" src="example-1.webp" class="active" fetchpriority="high"> <img alt="The same prompt sent to both Claude and Codex, both in 'thinking…' state" src="example-2.png"> <img alt="Both engines responding side by side with the romaji and translation of the quote" src="example-3.png"></div><div class="showcase-steps" aria-label="Showcase steps" role="tablist"><button class="step active" type="button" aria-selected="true" data-step="0" role="tab"><span class="num">一</span>Ask</button> <button class="step" type="button" aria-selected="false" data-step="1" role="tab"><span class="num">二</span>Think</button> <button class="step" type="button" aria-selected="false" data-step="2" role="tab"><span class="num">三</span>Answer</button></div></div></section><section id="how"><div class="container"><h2>Three steps, one window.</h2><p class="lead">The whole loop runs locally on your machine — only your prompt and the surrounding transcript are sent to Claude or Codex when you ask.</p><div class="grid-3"><div class="card"><div class="step">一</div><h3>Capture</h3><p>WASAPI loopback grabs whatever your default playback device is playing — meetings, lectures, anime, anything.</p></div><div class="card"><div class="step">二</div><h3>Transcribe</h3><p>whisper.cpp runs locally with a rolling buffer, streaming chat-style transcript lines. Auto-detect language, or pin to Japanese or English.</p></div><div class="card"><div class="step">三</div><h3>Ask</h3><p>Send a prompt to Claude, Codex, or both side-by-side. The recent transcript is attached as context automatically.</p></div></div></div></section><section id="use-cases"><div class="container"><h2>What people use it for.</h2><p class="lead">Anything your computer plays, Hibiki can transcribe and pull context from. Two flows that come up a lot:</p><div class="usecases"><article class="usecase"><div class="usecase-image"><video controls playsinline preload="none" aria-label="An anime quote is captured in the transcript; the AI panel breaks down the grammar, romaji, and translation." loop muted poster="example-quote-poster.webp" src="example-quote.mp4"></video></div><div class="usecase-body"><div class="tag">Anime · VN · drama</div><h3>Decode a Japanese line on the fly</h3><p>Pause a scene, let Hibiki transcribe the line that just played, then ask Claude or Codex to break it down — kanji reading, grammar, idiom, cultural context. No browser tab, no copy-paste across three sites.</p></div></article><article class="usecase"><div class="usecase-image"><video controls playsinline preload="none" aria-label="A streamer's claim appears in the transcript; the AI panel verifies it with corroborating details." loop muted poster="example-factcheck-poster.webp" src="example-factcheck.mp4"></video></div><div class="usecase-body"><div class="tag">Streams · podcasts · news</div><h3>Fact-check what a streamer just said</h3><p>Hear a confident claim about a date, a stat, or a feature? Ask Hibiki — the most recent transcript lines come along as context, so the AI knows exactly what was said and can call out whether it holds up.</p></div></article><article class="usecase"><div class="usecase-image"><video controls playsinline preload="none" aria-label="A meeting transcript scrolls past while the AI panel summarises action items and decisions." loop muted poster="example-meetings-poster.webp" src="example-meetings.mp4"></video></div><div class="usecase-body"><div class="tag">Standups · 1:1s · client calls</div><h3>Catch up on a meeting you half-heard</h3><p>Hibiki captures the call from your default playback device. Ask "what did we decide about X?" or "list the action items" and the AI answers from the live transcript — no recording to scrub through, no separate note-taker.</p></div></article><article class="usecase"><div class="usecase-image"><video controls playsinline preload="none" aria-label="A tech talk plays; the transcript captures a technical claim and the AI panel expands on it with a deeper explanation." loop muted poster="example-techtalks-poster.webp" src="example-techtalks.mp4"></video></div><div class="usecase-body"><div class="tag">Conferences · tutorials · lectures</div><h3>Follow a tech talk without taking notes</h3><p>When the speaker drops a term you don't know, ask the AI for a definition or a quick recap of the last few minutes. The recent transcript travels with the prompt, so the answer lands in the same context the talk is in.</p></div></article></div></div></section><section id="configure"><div class="container"><h2>How to configure.</h2><p class="lead">Hibiki ships with no whisper-cli, no model, no AI CLI — every piece is something you pick. Four steps inside Settings get you to a working transcript.</p><div class="configure"><article class="config-card"><div class="config-image"><img alt="Settings → Whisper → Whisper executable → Download… opens a chooser with four whisper-cli variants." src="example-configure-runtime.png" onerror='this.onerror=null,this.src="example-1.png"'></div><div class="config-body"><div class="step-num">一</div><h3>Download whisper-cli</h3><p>Settings → Whisper → <strong>Download…</strong> opens a variant chooser. NVIDIA GPU? Pick CUDA 12.4 (recommended). Otherwise CPU. Installs into the app's data folder.</p></div></article><article class="config-card"><div class="config-image"><img alt="Whisper model Download… modal showing the curated catalog of GGML models with sizes and recommended badges." src="example-configure-model.png" onerror='this.onerror=null,this.src="example-2.png"'></div><div class="config-body"><div class="step-num">二</div><h3>Download a model</h3><p>Same idea for the GGML model — pick one from the curated catalog (Large v3 Turbo q8_0 is recommended for Japanese). Already-installed entries show an "installed" badge so you can re-use them.</p></div></article><article class="config-card"><div class="config-image"><img alt="Claude tab showing detection tags for Windows and WSL, a Use WSL checkbox, and the winget install panel." src="example-configure-engines.png" onerror='this.onerror=null,this.src="example-3.png"'></div><div class="config-body"><div class="step-num">三</div><h3>Wire up Claude / Codex</h3><p>The Claude and Codex tabs auto-detect whether each CLI is on PATH or in WSL. Missing on Windows? One click runs <code>winget install Anthropic.ClaudeCode</code> and streams the log live.</p></div></article><article class="config-card"><div class="config-image"><img alt="Chat view with the Start button highlighted, a transcript line appearing, and an AI response panel on the right." src="example-configure-start.webp" onerror='this.onerror=null,this.src="example-1.webp"'></div><div class="config-body"><div class="step-num">四</div><h3>Press Start</h3><p>Save, head to Chat, hit Start. Play some audio — transcript lines stream in. Type a prompt, hit Enter, and the recent transcript rides along to whichever engine(s) you picked.</p></div></article></div></div></section><section><div class="container"><h2>Built on tools you trust.</h2><p class="lead">A small, sharp stack — React on the surface, Electron and Rust underneath, whisper.cpp doing the heavy lifting offline.</p><div class="stack"><span class="chip">Electron</span> <span class="chip">React + TypeScript</span> <span class="chip">Rust (napi-rs)</span> <span class="chip">whisper.cpp</span> <span class="chip">WASAPI loopback</span> <span class="chip">PowerShell 7</span> <span class="chip">Bun</span> <span class="chip">mise</span> <span class="chip">Claude · claude -p</span> <span class="chip">OpenAI Codex · codex exec</span></div></div></section><section id="platforms"><div class="container"><h2>Where it runs</h2><p class="lead">Built around Windows-specific audio capture today. Linux and macOS ports are plausible but unproven — contributions welcome.</p><div class="grid-3"><div class="card platform"><div class="platform-head"><h3>Windows</h3><span class="status status-ok">Supported</span></div><p>Built around WASAPI loopback and PowerShell 7+. Tested on Windows 11.</p></div><div class="card platform maybe"><div class="platform-head"><h3>Linux</h3><span class="status status-maybe">Maybe</span></div><p>Audio capture would need to swap WASAPI for PulseAudio or PipeWire. Everything else should port cleanly.</p></div><div class="card platform maybe"><div class="platform-head"><h3>macOS</h3><span class="status status-maybe">Maybe</span></div><p>System-audio loopback needs a driver like BlackHole or Soundflower. Not yet attempted.</p></div></div></div></section><section id="setup"><div class="container"><h2>Get started.</h2><p class="lead">Hibiki Codex runs on Windows 11 with PowerShell 7+. Toolchain versions are pinned in <code>mise.toml</code>, so setup is three commands.</p><div class="requires"><span class="requires-label">Requires</span><div><p>At least one AI CLI on your <code>PATH</code> (or inside WSL — the app detects both and offers a "Use WSL" toggle per engine):</p><p><a href="https://www.claude.com/product/claude-code"><strong>Claude Code</strong></a> (<code>claude -p</code>) — install with <code>npm install -g @anthropic-ai/claude-code</code> or <code>winget install Anthropic.ClaudeCode</code>. The Settings page can run the winget install for you when it isn't detected.</p><p><a href="https://github.com/openai/codex"><strong>OpenAI Codex CLI</strong></a> (<code>codex exec</code>) — install with <code>npm install -g @openai/codex</code>.</p><p><strong>whisper-cli + a GGML model:</strong> downloaded from inside the app — Settings → Whisper → <em>Download…</em>. Pick a runtime variant (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4) and a model from the curated catalog.</p></div></div><pre><span class="c"># 1. Install mise (one-time)</span>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hibiki Codex — live system-audio transcription with an AI sidekick</title>
+    <meta
+      name="description"
+      content="Windows desktop app that captures system audio, transcribes it locally with whisper.cpp, then lets you ask Claude or Codex about what you just heard."
+    />
+    <link rel="icon" type="image/webp" href="app-icon.webp" />
+    <link rel="apple-touch-icon" href="app-icon.png" />
+    <link rel="canonical" href="https://hibikicodex.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Hibiki Codex — a wise codex of what your computer just heard" />
+    <meta
+      property="og:description"
+      content="Live system-audio transcription with an AI sidekick. Capture, transcribe, and ask Claude or Codex what your computer just heard."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://hibikicodex.com/" />
+    <meta property="og:site_name" content="Hibiki Codex" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="https://hibikicodex.com/opengraph.png" />
+    <meta property="og:image:secure_url" content="https://hibikicodex.com/opengraph.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1536" />
+    <meta property="og:image:height" content="1024" />
+    <meta
+      property="og:image:alt"
+      content="Hibiki Codex card — title 'Hibiki Codex' and tagline 'Live system-audio transcription with an AI sidekick' over an illustration of Hibiki holding her glowing codex. Capture · Transcribe · Ask."
+    />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@BrunoLM7" />
+    <meta name="twitter:creator" content="@BrunoLM7" />
+    <meta name="twitter:title" content="Hibiki Codex — a wise codex of what your computer just heard" />
+    <meta
+      name="twitter:description"
+      content="Capture system audio, transcribe it locally with whisper.cpp, and ask Claude or Codex what your computer just heard."
+    />
+    <meta name="twitter:image" content="https://hibikicodex.com/opengraph.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Hibiki Codex card — title 'Hibiki Codex' and tagline 'Live system-audio transcription with an AI sidekick' over an illustration of Hibiki holding her glowing codex. Capture · Transcribe · Ask."
+    />
+
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0716" />
+
+    <script>
+      // Dark is the site default regardless of OS preference; the toggle in
+      // the header lets users opt into light, which is then remembered.
+      (function () {
+        var t = 'dark';
+        try {
+          var saved = localStorage.getItem('theme');
+          if (saved === 'light') t = 'light';
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.classList.add('js');
+      })();
+    </script>
+
+    <!-- LCP: surface the hero illustration to the browser's preload scanner
+         so it starts fetching while CSS / fonts are still in flight. -->
+    <link rel="preload" as="image" href="hibiki.webp" type="image/webp" fetchpriority="high" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      media="print"
+      onload="this.onload=null;this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      />
+    </noscript>
+
+    <style>
+      :root {
+        /* Palette pulled from the Hibiki illustration:
+           deep violet-black canvas, magical purple aura, codex-gold accents.
+           Dark is the default; light overrides live below. */
+        --bg: #0a0716;
+        --bg-elev: #15102a;
+        --bg-elev-2: #1d1739;
+        --ink: #ece5f5;
+        --ink-dim: #a499c3;
+        --ink-faint: #6c5e8c;
+        --accent: #d4ac4f;        /* codex gold — primary */
+        --accent-soft: #e8c668;   /* gold hover */
+        --gold: #d4ac4f;
+        --glow: #7c4dff;          /* purple aura */
+        --glow-soft: #a58aff;
+        --border: #2b2257;
+        --header-bg: rgba(10, 7, 22, 0.78);
+        --drawer-bg: rgba(10, 7, 22, 0.97);
+        --code-comment: #9a8cbe;  /* ~6:1 on --bg-elev in dark (WCAG AA) */
+        --grad-purple: rgba(124, 77, 255, 0.22);
+        --grad-purple-soft: rgba(165, 138, 255, 0.08);
+        --grad-gold: rgba(212, 172, 79, 0.05);
+        --radius: 10px;
+        --max-w: 1080px;
+
+        --sans:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+          sans-serif;
+        --serif: 'Noto Serif JP', Georgia, serif;
+        --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+      }
+
+      /* Light palette — warm parchment with deep-violet ink and a darker gold.
+         Only applied when the user explicitly picks light via the toggle;
+         OS prefers-color-scheme is intentionally ignored so the site looks
+         the same to everyone by default. */
+      :root[data-theme='light'] {
+        color-scheme: light;
+        --bg: #f7f1e3;
+        --bg-elev: #ede4cd;
+        --bg-elev-2: #e1d4b3;
+        --ink: #1d1739;
+        --ink-dim: #4a3f6e;
+        --ink-faint: #8a7faa;
+        --accent: #8a6515;
+        --accent-soft: #a07a1c;
+        --gold: #8a6515;
+        --glow: #6b3df0;
+        --glow-soft: #8e6dff;
+        --border: #d4c39a;
+        --header-bg: rgba(247, 241, 227, 0.82);
+        --drawer-bg: rgba(247, 241, 227, 0.97);
+        --code-comment: #5d527a;  /* ~5.6:1 on --bg-elev in light (WCAG AA) */
+        --grad-purple: rgba(124, 77, 255, 0.10);
+        --grad-purple-soft: rgba(165, 138, 255, 0.04);
+        --grad-gold: rgba(138, 101, 21, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-image:
+          radial-gradient(
+            ellipse 70% 50% at 80% -5%,
+            var(--grad-purple),
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 60% 40% at 5% 20%,
+            var(--grad-purple-soft),
+            transparent 65%
+          ),
+          radial-gradient(
+            ellipse 80% 40% at 50% 100%,
+            var(--grad-gold),
+            transparent 70%
+          );
+      }
+
+      a {
+        color: var(--accent-soft);
+        text-decoration: none;
+      }
+      a:hover {
+        color: var(--accent);
+      }
+
+      .container {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      /* Header — sticky with frosted-glass backdrop */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 16px 0;
+        background: var(--header-bg);
+        backdrop-filter: blur(14px) saturate(140%);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        border-bottom: 1px solid var(--border);
+      }
+      header .container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        object-fit: cover;
+        display: block;
+        box-shadow: 0 0 16px -2px rgba(124, 77, 255, 0.4);
+      }
+      .brand .name {
+        font-size: 26px;
+        line-height: 1.1;
+      }
+      nav a {
+        margin-left: 28px;
+        color: var(--ink-dim);
+        font-size: 16px;
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
+      }
+      nav a:hover {
+        color: var(--ink);
+      }
+      nav a.icon-link svg {
+        width: 22px;
+        height: 22px;
+        display: block;
+        fill: currentColor;
+      }
+      /* Desktop: GitHub link is icon-only; the text label shows only inside
+         the mobile drawer (overridden in the @media block below). */
+      .icon-link-label {
+        display: none;
+      }
+
+      /* Theme toggle — cycles system → light → dark. Renders as a circular
+         icon button on desktop and as a full-width row inside the mobile
+         drawer (overrides in the @media block below). */
+      .theme-toggle {
+        margin-left: 28px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink-dim);
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+        vertical-align: middle;
+        transition: color 150ms ease, border-color 150ms ease;
+      }
+      .theme-toggle:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .theme-icon {
+        width: 18px;
+        height: 18px;
+        display: none;
+      }
+      .theme-label {
+        display: none;
+      }
+      :root[data-theme='light'] .theme-icon-light { display: block; }
+      :root[data-theme='dark'] .theme-icon-dark { display: block; }
+
+      /* Mobile menu hamburger — hidden on desktop, swaps to a close (X) icon
+         when the drawer is open. */
+      .nav-toggle {
+        display: none;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink-dim);
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        padding: 0;
+        transition: color 150ms ease, border-color 150ms ease;
+      }
+      .nav-toggle:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .nav-icon {
+        width: 18px;
+        height: 18px;
+        display: none;
+      }
+      .nav-icon-open { display: block; }
+      .nav-toggle[aria-expanded='true'] .nav-icon-open { display: none; }
+      .nav-toggle[aria-expanded='true'] .nav-icon-close { display: block; }
+
+      @media (max-width: 760px) {
+        .nav-toggle { display: inline-flex; }
+
+        nav {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          padding: 4px 24px 16px;
+          background: var(--drawer-bg);
+          backdrop-filter: blur(28px) saturate(200%);
+          -webkit-backdrop-filter: blur(28px) saturate(200%);
+          border-bottom: 1px solid var(--border);
+          box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 0.55);
+          transform: translateY(-6px);
+          opacity: 0;
+          visibility: hidden;
+          transition:
+            transform 180ms ease,
+            opacity 180ms ease,
+            visibility 0s linear 180ms;
+        }
+        /* Fallback when backdrop-filter isn't available — go fully opaque
+           so menu text stays readable over the hero artwork. */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+          nav { background: var(--bg); }
+        }
+        nav.is-open {
+          transform: translateY(0);
+          opacity: 1;
+          visibility: visible;
+          transition:
+            transform 180ms ease,
+            opacity 180ms ease,
+            visibility 0s linear 0s;
+        }
+        nav a {
+          margin-left: 0;
+          padding: 14px 4px;
+          font-size: 17px;
+        }
+        nav a.icon-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 4px;
+        }
+        nav a.icon-link svg {
+          width: 20px;
+          height: 20px;
+        }
+        .icon-link-label {
+          display: inline;
+          font-size: 17px;
+        }
+
+        .theme-toggle {
+          margin-left: 0;
+          width: 100%;
+          height: auto;
+          padding: 14px 4px;
+          border: 0;
+          border-radius: 0;
+          justify-content: flex-start;
+          gap: 12px;
+          color: var(--ink-dim);
+          font: inherit;
+          font-size: 17px;
+        }
+        .theme-toggle:hover {
+          color: var(--accent);
+          border-color: transparent;
+        }
+        :root[data-theme='light'] .theme-label-light,
+        :root[data-theme='dark'] .theme-label-dark {
+          display: inline;
+        }
+      }
+
+      /* Hero */
+      .hero {
+        padding: 96px 0 80px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Hibiki illustration as a faded backdrop figure. Anchored to the
+         centered 1080px container (not the full viewport) so she stays near
+         the headline on ultrawide monitors instead of drifting to the edge.
+         mix-blend-mode: screen + a radial mask drops her dark background
+         straight into the page, leaving only the glowing aura visible. */
+      .hero .container {
+        position: relative;
+        z-index: 1;
+      }
+      .hero .container > *:not(.hibiki-figure) {
+        position: relative;
+        z-index: 1;
+      }
+      .hibiki-figure {
+        position: absolute;
+        top: -40px;
+        right: -120px;
+        width: 520px;
+        max-width: 55%;
+        height: auto;
+        opacity: 0.6;
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 0;
+        -webkit-mask-image: radial-gradient(
+          ellipse 65% 75% at 50% 45%,
+          #000 30%,
+          transparent 78%
+        );
+        mask-image: radial-gradient(
+          ellipse 65% 75% at 50% 45%,
+          #000 30%,
+          transparent 78%
+        );
+      }
+      @media (max-width: 760px) {
+        .hibiki-figure {
+          opacity: 0.3;
+          right: -10%;
+          width: 90%;
+          max-width: 90%;
+        }
+      }
+      .hero .kanji-mark {
+        font-family: var(--serif);
+        font-size: 96px;
+        color: var(--accent);
+        line-height: 1;
+        margin-bottom: 12px;
+        text-shadow:
+          0 0 40px rgba(212, 172, 79, 0.35),
+          0 0 80px rgba(124, 77, 255, 0.25);
+      }
+      .hero .pronounce {
+        color: var(--ink-dim);
+        font-size: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 28px;
+      }
+      .hero h1 {
+        font-size: clamp(32px, 5vw, 52px);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        text-wrap: balance;
+        margin: 0 0 16px;
+      }
+      .hero .tagline {
+        font-size: clamp(16px, 2vw, 20px);
+        color: var(--ink-dim);
+        max-width: 640px;
+        margin: 0 auto 40px;
+      }
+      .cta {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 26px;
+        border-radius: var(--radius);
+        font-weight: 500;
+        font-size: 17px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          transform 0.15s;
+        border: 1px solid transparent;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #1a1124;
+        box-shadow: 0 0 24px rgba(212, 172, 79, 0.25);
+      }
+      .btn-primary:hover {
+        background: var(--accent-soft);
+        color: #1a1124;
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--ink);
+        border-color: var(--border);
+      }
+      .btn-secondary:hover {
+        border-color: var(--ink-dim);
+        color: var(--ink);
+      }
+
+      /* Hero CTA — gentle glow pulse + a shimmer sweep across the button so
+         the primary action subtly invites attention without flashing. */
+      .hero .btn-primary {
+        position: relative;
+        overflow: hidden;
+        animation: cta-pulse 2.4s ease-in-out infinite;
+      }
+      .hero .btn-primary::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          100deg,
+          transparent 35%,
+          rgba(255, 255, 255, 0.35) 50%,
+          transparent 65%
+        );
+        transform: translateX(-120%);
+        animation: cta-shimmer 3.2s ease-in-out infinite;
+        pointer-events: none;
+        mix-blend-mode: overlay;
+      }
+      @keyframes cta-pulse {
+        0%,
+        100% {
+          box-shadow:
+            0 0 24px rgba(212, 172, 79, 0.25),
+            0 0 0 0 color-mix(in oklab, var(--accent) 45%, transparent);
+        }
+        50% {
+          box-shadow:
+            0 0 24px rgba(212, 172, 79, 0.25),
+            0 0 0 6px color-mix(in oklab, var(--accent) 0%, transparent);
+        }
+      }
+      @keyframes cta-shimmer {
+        0% {
+          transform: translateX(-120%);
+        }
+        55% {
+          transform: translateX(120%);
+        }
+        100% {
+          transform: translateX(120%);
+        }
+      }
+
+      /* Screenshot showcase — three real app screenshots crossfade in a loop
+         (ask → think → answer), 4s per frame, 0.6s overlap. */
+      .showcase {
+        position: relative;
+        margin: 64px auto 0;
+        max-width: 880px;
+        aspect-ratio: 884 / 645;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        box-shadow:
+          0 30px 80px -20px rgba(0, 0, 0, 0.7),
+          0 0 1px rgba(124, 77, 255, 0.35),
+          0 0 80px -10px rgba(124, 77, 255, 0.22);
+        background: var(--bg-elev);
+      }
+      .showcase img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+        cursor: zoom-in;
+      }
+      .showcase img.active {
+        opacity: 1;
+      }
+      .showcase-steps {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .showcase-steps .step {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--ink-faint);
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-family: var(--sans);
+        font-size: 16px;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s,
+          border-color 0.15s;
+      }
+      .showcase-steps .step:hover {
+        color: var(--ink-dim);
+        border-color: var(--ink-faint);
+      }
+      .showcase-steps .step.active {
+        background: rgba(212, 172, 79, 0.12);
+        color: var(--accent);
+        border-color: var(--accent);
+        box-shadow: 0 0 24px -4px rgba(212, 172, 79, 0.35);
+      }
+      .showcase-steps .step .num {
+        font-family: var(--serif);
+        margin-right: 8px;
+        opacity: 0.7;
+      }
+
+      /* Modal / lightbox */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 7, 22, 0.92);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        z-index: 1000;
+        cursor: zoom-out;
+        animation: modal-fade-in 0.2s ease-out;
+      }
+      .modal[hidden] {
+        display: none;
+      }
+      .modal-img,
+      .modal-video {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(124, 77, 255, 0.4),
+          0 0 80px -10px rgba(124, 77, 255, 0.3);
+        cursor: default;
+      }
+      .modal-video {
+        background: var(--bg-elev);
+      }
+      .modal-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(15, 10, 30, 0.7);
+        color: var(--ink);
+        border: 1px solid var(--border);
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--sans);
+      }
+      .modal-close:hover {
+        background: rgba(30, 20, 50, 0.85);
+        border-color: var(--ink-faint);
+      }
+      @keyframes modal-fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .showcase img,
+        .modal {
+          transition: none;
+          animation: none;
+        }
+      }
+
+      /* Sections */
+      section {
+        padding: 80px 0;
+        border-top: 1px solid var(--border);
+      }
+      section h2 {
+        font-size: clamp(24px, 3.5vw, 34px);
+        margin: 0 0 12px;
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+        text-wrap: balance;
+      }
+      section .lead {
+        color: var(--ink-dim);
+        margin: 0 0 48px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 760px) {
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+      }
+      .card .step {
+        font-family: var(--serif);
+        color: var(--accent);
+        font-size: 22px;
+        margin-bottom: 10px;
+        line-height: 1;
+      }
+
+      /* Use case cards — two-up grid, screenshot above + caption */
+      .usecases {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+      @media (max-width: 760px) {
+        .usecases {
+          grid-template-columns: 1fr;
+        }
+      }
+      .usecase {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+      }
+      .usecase:hover {
+        border-color: rgba(212, 172, 79, 0.55);
+        box-shadow:
+          0 12px 32px -16px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(212, 172, 79, 0.18),
+          0 0 40px -8px rgba(124, 77, 255, 0.18);
+        transform: translateY(-2px);
+      }
+      .usecase-image {
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        aspect-ratio: 16 / 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .usecase-image img,
+      .usecase-image video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        cursor: zoom-in;
+        display: block;
+        background: var(--bg);
+      }
+      /* The cover/top-center rules above keep the video framed nicely in the
+         16:10 thumbnail. But native fullscreen (and the browser controls'
+         fullscreen button) keeps applying them, which crops the bottom when
+         the video isn't 16:10. Reset to contain + centered in fullscreen. */
+      video:fullscreen {
+        object-fit: contain;
+        object-position: center center;
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      video:-webkit-full-screen {
+        object-fit: contain;
+        object-position: center center;
+        width: 100%;
+        height: 100%;
+        background: #000;
+      }
+      .usecase-body {
+        padding: 22px 24px;
+      }
+      .usecase-body .tag {
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .usecase-body h3 {
+        margin: 0 0 8px;
+        font-size: 19px;
+        line-height: 1.3;
+      }
+      .usecase-body p {
+        margin: 0;
+        color: var(--ink-dim);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      /* Configure-step cards — narrower grid, numbered, screenshot on top */
+      .configure {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+      .config-card {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+      }
+      .config-card:hover {
+        border-color: rgba(212, 172, 79, 0.55);
+        box-shadow:
+          0 10px 28px -16px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(212, 172, 79, 0.18),
+          0 0 30px -8px rgba(124, 77, 255, 0.18);
+        transform: translateY(-2px);
+      }
+      .config-image {
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        aspect-ratio: 16 / 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .config-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        cursor: zoom-in;
+        display: block;
+      }
+      .config-body {
+        padding: 16px 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .config-body .step-num {
+        font-family: var(--serif);
+        color: var(--accent);
+        font-size: 22px;
+        line-height: 1;
+      }
+      .config-body h3 {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.3;
+      }
+      .config-body p {
+        margin: 0;
+        color: var(--ink-dim);
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+
+      /* Platform support cards */
+      .platform-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .platform-head h3 {
+        margin: 0;
+      }
+      .status {
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 4px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .status-ok {
+        background: rgba(212, 172, 79, 0.16);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+      .status-maybe {
+        background: rgba(108, 94, 140, 0.12);
+        color: var(--ink-faint);
+        border: 1px dashed var(--ink-faint);
+      }
+      .card.platform.maybe {
+        opacity: 0.85;
+      }
+
+      /* Requires callout */
+      .requires {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 16px 20px;
+        margin: 0 0 24px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: var(--radius);
+        background: rgba(212, 172, 79, 0.05);
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .requires-label {
+        font-family: var(--mono);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        white-space: nowrap;
+        padding-top: 2px;
+      }
+      .requires p {
+        margin: 0;
+        color: var(--ink-dim);
+      }
+      .requires p + p {
+        margin-top: 6px;
+      }
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      .card p {
+        margin: 0;
+        color: var(--ink-dim);
+        font-size: 14px;
+      }
+
+      /* Stack */
+      .stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .chip {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--ink-dim);
+        background: var(--bg-elev);
+      }
+
+      /* Code block */
+      pre {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--ink);
+        margin: 0;
+      }
+      pre .c {
+        color: var(--code-comment);
+      }
+      pre .k {
+        color: var(--accent-soft);
+      }
+
+      /* Footer */
+      footer {
+        padding: 40px 0 60px;
+        border-top: 1px solid var(--border);
+        color: var(--ink-faint);
+        font-size: 14px;
+        text-align: center;
+      }
+      footer a {
+        color: var(--ink-dim);
+      }
+      footer a:hover {
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="brand">
+          <img class="brand-icon" src="app-icon.webp" alt="" />
+          <span class="name">Hibiki Codex</span>
+        </div>
+        <nav id="primary-nav" aria-label="Primary">
+          <a href="#how">How it works</a>
+          <a href="#use-cases">Use cases</a>
+          <a href="#configure">Configure</a>
+          <a href="#setup">Setup</a>
+          <a
+            class="icon-link"
+            href="https://github.com/BrunoLM/hibiki-codex"
+            aria-label="GitHub repository"
+            title="GitHub"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+            </svg>
+            <span class="icon-link-label">GitHub</span>
+          </a>
+          <button class="theme-toggle" type="button" aria-label="Theme">
+            <svg class="theme-icon theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+            </svg>
+            <svg class="theme-icon theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+            <span class="theme-label theme-label-light">Light</span>
+            <span class="theme-label theme-label-dark">Dark</span>
+          </button>
+        </nav>
+        <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="primary-nav">
+          <svg class="nav-icon nav-icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+          <svg class="nav-icon nav-icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+    <section class="hero" style="border-top: 0">
+      <div class="container">
+        <img
+          class="hibiki-figure"
+          src="hibiki.webp"
+          alt=""
+          aria-hidden="true"
+          fetchpriority="high"
+          decoding="async"
+        />
+        <div class="kanji-mark">響</div>
+        <div class="pronounce">hi · bi · ki — echo, resonance</div>
+        <h1>A wise codex of what your computer just heard</h1>
+        <p class="tagline">
+          Hibiki Codex captures your system audio, transcribes it locally with
+          whisper.cpp (auto-detect, Japanese, or English), and lets you ask
+          Claude or Codex about what you've been hearing — all in one Windows
+          desktop app. Whisper runtime + model are downloaded in-app on first
+          launch.
+        </p>
+        <div class="cta">
+          <a
+            class="btn btn-primary"
+            href="https://github.com/BrunoLM/hibiki-codex/releases/latest"
+            >Download for Windows ↓</a
+          >
+          <a
+            class="btn btn-secondary"
+            href="https://github.com/BrunoLM/hibiki-codex"
+            >View on GitHub →</a
+          >
+          <a class="btn btn-secondary" href="#setup">Build from source</a>
+        </div>
+
+        <div class="showcase" aria-label="Hibiki Codex screenshots: ask, think, answer">
+          <img
+            class="active"
+            src="example-1.webp"
+            alt="Hibiki Codex with a Japanese Shadow Garden quote in the transcript and a prompt being typed"
+            fetchpriority="high"
+          />
+          <img
+            src="example-2.png"
+            alt="The same prompt sent to both Claude and Codex, both in 'thinking…' state"
+          />
+          <img
+            src="example-3.png"
+            alt="Both engines responding side by side with the romaji and translation of the quote"
+          />
+        </div>
+        <div class="showcase-steps" role="tablist" aria-label="Showcase steps">
+          <button class="step active" type="button" data-step="0" role="tab" aria-selected="true">
+            <span class="num">一</span>Ask
+          </button>
+          <button class="step" type="button" data-step="1" role="tab" aria-selected="false">
+            <span class="num">二</span>Think
+          </button>
+          <button class="step" type="button" data-step="2" role="tab" aria-selected="false">
+            <span class="num">三</span>Answer
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="container">
+        <h2>Three steps, one window.</h2>
+        <p class="lead">
+          The whole loop runs locally on your machine — only your prompt and
+          the surrounding transcript are sent to Claude or Codex when you ask.
+        </p>
+        <div class="grid-3">
+          <div class="card">
+            <div class="step">一</div>
+            <h3>Capture</h3>
+            <p>
+              WASAPI loopback grabs whatever your default playback device is
+              playing — meetings, lectures, anime, anything.
+            </p>
+          </div>
+          <div class="card">
+            <div class="step">二</div>
+            <h3>Transcribe</h3>
+            <p>
+              whisper.cpp runs locally with a rolling buffer, streaming
+              chat-style transcript lines. Auto-detect language, or pin to
+              Japanese or English.
+            </p>
+          </div>
+          <div class="card">
+            <div class="step">三</div>
+            <h3>Ask</h3>
+            <p>
+              Send a prompt to Claude, Codex, or both side-by-side. The recent
+              transcript is attached as context automatically.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="use-cases">
+      <div class="container">
+        <h2>What people use it for.</h2>
+        <p class="lead">
+          Anything your computer plays, Hibiki can transcribe and pull context
+          from. Two flows that come up a lot:
+        </p>
+        <div class="usecases">
+          <article class="usecase">
+            <div class="usecase-image">
+              <video
+                src="example-quote.mp4"
+                poster="example-quote-poster.webp"
+                controls
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label="An anime quote is captured in the transcript; the AI panel breaks down the grammar, romaji, and translation."
+              ></video>
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Anime · VN · drama</div>
+              <h3>Decode a Japanese line on the fly</h3>
+              <p>
+                Pause a scene, let Hibiki transcribe the line that just played,
+                then ask Claude or Codex to break it down — kanji reading,
+                grammar, idiom, cultural context. No browser tab, no copy-paste
+                across three sites.
+              </p>
+            </div>
+          </article>
+          <article class="usecase">
+            <div class="usecase-image">
+              <video
+                src="example-factcheck.mp4"
+                poster="example-factcheck-poster.webp"
+                controls
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label="A streamer's claim appears in the transcript; the AI panel verifies it with corroborating details."
+              ></video>
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Streams · podcasts · news</div>
+              <h3>Fact-check what a streamer just said</h3>
+              <p>
+                Hear a confident claim about a date, a stat, or a feature? Ask
+                Hibiki — the most recent transcript lines come along as
+                context, so the AI knows exactly what was said and can call
+                out whether it holds up.
+              </p>
+            </div>
+          </article>
+          <article class="usecase">
+            <div class="usecase-image">
+              <video
+                src="example-meetings.mp4"
+                poster="example-meetings-poster.webp"
+                controls
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label="A meeting transcript scrolls past while the AI panel summarises action items and decisions."
+              ></video>
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Standups · 1:1s · client calls</div>
+              <h3>Catch up on a meeting you half-heard</h3>
+              <p>
+                Hibiki captures the call from your default playback device.
+                Ask "what did we decide about X?" or "list the action items"
+                and the AI answers from the live transcript — no recording
+                to scrub through, no separate note-taker.
+              </p>
+            </div>
+          </article>
+          <article class="usecase">
+            <div class="usecase-image">
+              <video
+                src="example-techtalks.mp4"
+                poster="example-techtalks-poster.webp"
+                controls
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label="A tech talk plays; the transcript captures a technical claim and the AI panel expands on it with a deeper explanation."
+              ></video>
+            </div>
+            <div class="usecase-body">
+              <div class="tag">Conferences · tutorials · lectures</div>
+              <h3>Follow a tech talk without taking notes</h3>
+              <p>
+                When the speaker drops a term you don't know, ask the AI for a
+                definition or a quick recap of the last few minutes. The
+                recent transcript travels with the prompt, so the answer
+                lands in the same context the talk is in.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="configure">
+      <div class="container">
+        <h2>How to configure.</h2>
+        <p class="lead">
+          Hibiki ships with no whisper-cli, no model, no AI CLI — every
+          piece is something you pick. Four steps inside Settings get you
+          to a working transcript.
+        </p>
+        <div class="configure">
+          <!-- TODO: replace each config-image with a real settings screenshot.
+               Until then the missing files fall back to example-1/2/3.png so
+               every card stays clickable and the modal works end-to-end. -->
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-runtime.png"
+                alt="Settings → Whisper → Whisper executable → Download… opens a chooser with four whisper-cli variants."
+                onerror="this.onerror=null; this.src='example-1.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">一</div>
+              <h3>Download whisper-cli</h3>
+              <p>
+                Settings → Whisper → <strong>Download…</strong> opens a
+                variant chooser. NVIDIA GPU? Pick CUDA 12.4 (recommended).
+                Otherwise CPU. Installs into the app's data folder.
+              </p>
+            </div>
+          </article>
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-model.png"
+                alt="Whisper model Download… modal showing the curated catalog of GGML models with sizes and recommended badges."
+                onerror="this.onerror=null; this.src='example-2.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">二</div>
+              <h3>Download a model</h3>
+              <p>
+                Same idea for the GGML model — pick one from the curated
+                catalog (Large v3 Turbo q8_0 is recommended for Japanese).
+                Already-installed entries show an "installed" badge so you
+                can re-use them.
+              </p>
+            </div>
+          </article>
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-engines.png"
+                alt="Claude tab showing detection tags for Windows and WSL, a Use WSL checkbox, and the winget install panel."
+                onerror="this.onerror=null; this.src='example-3.png';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">三</div>
+              <h3>Wire up Claude / Codex</h3>
+              <p>
+                The Claude and Codex tabs auto-detect whether each CLI is on
+                PATH or in WSL. Missing on Windows? One click runs
+                <code>winget install Anthropic.ClaudeCode</code> and streams
+                the log live.
+              </p>
+            </div>
+          </article>
+          <article class="config-card">
+            <div class="config-image">
+              <img
+                src="example-configure-start.webp"
+                alt="Chat view with the Start button highlighted, a transcript line appearing, and an AI response panel on the right."
+                onerror="this.onerror=null; this.src='example-1.webp';"
+              />
+            </div>
+            <div class="config-body">
+              <div class="step-num">四</div>
+              <h3>Press Start</h3>
+              <p>
+                Save, head to Chat, hit Start. Play some audio — transcript
+                lines stream in. Type a prompt, hit Enter, and the recent
+                transcript rides along to whichever engine(s) you picked.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <h2>Built on tools you trust.</h2>
+        <p class="lead">
+          A small, sharp stack — React on the surface, Electron and Rust
+          underneath, whisper.cpp doing the heavy lifting offline.
+        </p>
+        <div class="stack">
+          <span class="chip">Electron</span>
+          <span class="chip">React + TypeScript</span>
+          <span class="chip">Rust (napi-rs)</span>
+          <span class="chip">whisper.cpp</span>
+          <span class="chip">WASAPI loopback</span>
+          <span class="chip">PowerShell 7</span>
+          <span class="chip">Bun</span>
+          <span class="chip">mise</span>
+          <span class="chip">Claude · claude -p</span>
+          <span class="chip">OpenAI Codex · codex exec</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="platforms">
+      <div class="container">
+        <h2>Where it runs</h2>
+        <p class="lead">
+          Built around Windows-specific audio capture today. Linux and macOS
+          ports are plausible but unproven — contributions welcome.
+        </p>
+        <div class="grid-3">
+          <div class="card platform">
+            <div class="platform-head">
+              <h3>Windows</h3>
+              <span class="status status-ok">Supported</span>
+            </div>
+            <p>
+              Built around WASAPI loopback and PowerShell 7+. Tested on
+              Windows 11.
+            </p>
+          </div>
+          <div class="card platform maybe">
+            <div class="platform-head">
+              <h3>Linux</h3>
+              <span class="status status-maybe">Maybe</span>
+            </div>
+            <p>
+              Audio capture would need to swap WASAPI for PulseAudio or
+              PipeWire. Everything else should port cleanly.
+            </p>
+          </div>
+          <div class="card platform maybe">
+            <div class="platform-head">
+              <h3>macOS</h3>
+              <span class="status status-maybe">Maybe</span>
+            </div>
+            <p>
+              System-audio loopback needs a driver like BlackHole or Soundflower.
+              Not yet attempted.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="setup">
+      <div class="container">
+        <h2>Get started.</h2>
+        <p class="lead">
+          Hibiki Codex runs on Windows 11 with PowerShell 7+. Toolchain
+          versions are pinned in <code>mise.toml</code>, so setup is three
+          commands.
+        </p>
+        <div class="requires">
+          <span class="requires-label">Requires</span>
+          <div>
+            <p>
+              At least one AI CLI on your <code>PATH</code> (or inside WSL —
+              the app detects both and offers a "Use WSL" toggle per engine):
+            </p>
+            <p>
+              <a href="https://www.claude.com/product/claude-code"><strong>Claude Code</strong></a>
+              (<code>claude -p</code>) — install with
+              <code>npm install -g @anthropic-ai/claude-code</code> or
+              <code>winget install Anthropic.ClaudeCode</code>. The Settings
+              page can run the winget install for you when it isn't detected.
+            </p>
+            <p>
+              <a href="https://github.com/openai/codex"><strong>OpenAI Codex CLI</strong></a>
+              (<code>codex exec</code>) — install with
+              <code>npm install -g @openai/codex</code>.
+            </p>
+            <p>
+              <strong>whisper-cli + a GGML model:</strong> downloaded from
+              inside the app — Settings → Whisper → <em>Download…</em>. Pick a
+              runtime variant (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4) and a
+              model from the curated catalog.
+            </p>
+          </div>
+        </div>
+        <pre><span class="c"># 1. Install mise (one-time)</span>
 winget install jdx.mise
 
 <span class="c"># 2. Install Bun + Rust at the pinned versions</span>
@@ -13,4 +1474,218 @@ bun run build:rust
 <span class="c"># 4. Launch — then open Settings and use the in-app Download buttons</span>
 <span class="c">#    to grab a whisper-cli variant (CUDA 12.4 recommended for NVIDIA GPUs)</span>
 <span class="c">#    and a GGML model. Press Start on the Chat tab to begin transcribing.</span>
-bun run dev</pre><p style="margin-top:24px;color:var(--ink-dim);font-size:14px">Prefer a one-shot install? Paste the <a href="https://github.com/BrunoLM/hibiki-codex#setup-with-ai">Setup with AI</a> prompt from the README into Claude Code or Codex — it installs every prerequisite and builds the project; the whisper runtime + model are then downloaded from inside the app on first launch.</p></div></section></main><div class="modal" aria-label="Screenshot preview" role="dialog" aria-modal="true" hidden><button class="modal-close" type="button" aria-label="Close">×</button> <img alt="" src="" class="modal-img"><video controls playsinline preload="metadata" class="modal-video" hidden></video></div><script>(()=>{const e=document.querySelector(".showcase");if(!e)return;const t=Array.from(e.querySelectorAll("img")),c=Array.from(document.querySelectorAll(".showcase-steps .step")),r=document.querySelector(".modal"),o=r.querySelector(".modal-img"),a=r.querySelector(".modal-video"),i=r.querySelector(".modal-close");matchMedia("(prefers-reduced-motion: reduce)").matches&&document.querySelectorAll(".usecase-image video, .config-image video").forEach(e=>{e.autoplay=!1,e.removeAttribute("autoplay"),e.pause(),e.controls=!0});let l=0,d=null;function n(e){l=(e+t.length)%t.length,t.forEach((e,t)=>e.classList.toggle("active",t===l)),c.forEach((e,t)=>{const c=t===l;e.classList.toggle("active",c),e.setAttribute("aria-selected",c?"true":"false")})}function s(){u(),d=setInterval(()=>n(l+1),4500)}function u(){d&&(clearInterval(d),d=null)}function m(e,t,c){"video"===c?(o.hidden=!0,o.removeAttribute("src"),a.hidden=!1,a.src=e,a.setAttribute("aria-label",t||""),a.play().catch(()=>{})):(a.hidden=!0,a.pause(),a.removeAttribute("src"),o.hidden=!1,o.src=e,o.alt=t||""),r.hidden=!1,document.body.style.overflow="hidden",u()}function v(){r.hidden=!0,document.body.style.overflow="",a.pause(),a.removeAttribute("src"),s()}c.forEach((e,t)=>{e.addEventListener("click",()=>{n(t),s()})}),t.forEach(e=>e.addEventListener("click",()=>m(e.src,e.alt,"image"))),document.querySelectorAll(".usecase-image img, .config-image img").forEach(e=>e.addEventListener("click",()=>m(e.src,e.alt,"image"))),document.querySelectorAll(".usecase-image video, .config-image video").forEach(e=>e.addEventListener("click",()=>m(e.currentSrc||e.src,e.getAttribute("aria-label"),"video"))),i.addEventListener("click",v),r.addEventListener("click",e=>{e.target===r&&v()}),document.addEventListener("keydown",e=>{"Escape"!==e.key||r.hidden||v()}),n(0),s()})()</script><footer><div class="container"><p>響 · Hibiki Codex · MIT-style hobby project · <a href="https://github.com/BrunoLM/hibiki-codex">github.com/BrunoLM/hibiki-codex</a></p></div></footer></body></html>
+bun run dev</pre>
+        <p style="margin-top: 24px; color: var(--ink-dim); font-size: 14px">
+          Prefer a one-shot install? Paste the
+          <a
+            href="https://github.com/BrunoLM/hibiki-codex#setup-with-ai"
+            >Setup with AI</a
+          >
+          prompt from the README into Claude Code or Codex — it installs every
+          prerequisite and builds the project; the whisper runtime + model are
+          then downloaded from inside the app on first launch.
+        </p>
+      </div>
+    </section>
+    </main>
+
+    <div class="modal" hidden role="dialog" aria-modal="true" aria-label="Screenshot preview">
+      <button class="modal-close" type="button" aria-label="Close">×</button>
+      <img class="modal-img" src="" alt="" />
+      <video class="modal-video" controls preload="metadata" playsinline hidden></video>
+    </div>
+
+    <script>
+      (() => {
+        const showcase = document.querySelector('.showcase');
+        if (!showcase) return;
+        const images = Array.from(showcase.querySelectorAll('img'));
+        const steps = Array.from(
+          document.querySelectorAll('.showcase-steps .step')
+        );
+        const modal = document.querySelector('.modal');
+        const modalImg = modal.querySelector('.modal-img');
+        const modalVideo = modal.querySelector('.modal-video');
+        const modalClose = modal.querySelector('.modal-close');
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // If the user prefers reduced motion, stop the auto-looping inline
+        // videos and surface native controls so they can opt in manually.
+        if (reduceMotion) {
+          document
+            .querySelectorAll('.usecase-image video, .config-image video')
+            .forEach((v) => {
+              v.autoplay = false;
+              v.removeAttribute('autoplay');
+              v.pause();
+              v.controls = true;
+            });
+        }
+
+        let current = 0;
+        let timer = null;
+        const INTERVAL_MS = 4500;
+
+        function setStep(i) {
+          current = (i + images.length) % images.length;
+          images.forEach((img, idx) =>
+            img.classList.toggle('active', idx === current)
+          );
+          steps.forEach((btn, idx) => {
+            const active = idx === current;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+        }
+
+        function startTimer() {
+          stopTimer();
+          timer = setInterval(() => setStep(current + 1), INTERVAL_MS);
+        }
+
+        function stopTimer() {
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+        }
+
+        steps.forEach((btn, i) => {
+          btn.addEventListener('click', () => {
+            setStep(i);
+            startTimer(); // reset cadence after manual jump
+          });
+        });
+
+        // Modal
+        function openModal(src, alt, type) {
+          if (type === 'video') {
+            modalImg.hidden = true;
+            modalImg.removeAttribute('src');
+            modalVideo.hidden = false;
+            modalVideo.src = src;
+            modalVideo.setAttribute('aria-label', alt || '');
+            modalVideo.play().catch(() => {});
+          } else {
+            modalVideo.hidden = true;
+            modalVideo.pause();
+            modalVideo.removeAttribute('src');
+            modalImg.hidden = false;
+            modalImg.src = src;
+            modalImg.alt = alt || '';
+          }
+          modal.hidden = false;
+          document.body.style.overflow = 'hidden';
+          stopTimer();
+        }
+        function closeModal() {
+          modal.hidden = true;
+          document.body.style.overflow = '';
+          modalVideo.pause();
+          modalVideo.removeAttribute('src');
+          startTimer();
+        }
+        images.forEach((img) =>
+          img.addEventListener('click', () => openModal(img.src, img.alt, 'image'))
+        );
+        document
+          .querySelectorAll('.usecase-image img, .config-image img')
+          .forEach((img) =>
+            img.addEventListener('click', () => openModal(img.src, img.alt, 'image'))
+          );
+        document
+          .querySelectorAll('.usecase-image video, .config-image video')
+          .forEach((v) =>
+            v.addEventListener('click', () =>
+              openModal(v.currentSrc || v.src, v.getAttribute('aria-label'), 'video')
+            )
+          );
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+          // Close when clicking the backdrop (not the image itself)
+          if (e.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !modal.hidden) closeModal();
+        });
+
+        setStep(0);
+        startTimer();
+      })();
+    </script>
+
+    <footer>
+      <div class="container">
+        <p>
+          響 · Hibiki Codex · MIT-style hobby project ·
+          <a href="https://github.com/BrunoLM/hibiki-codex"
+            >github.com/BrunoLM/hibiki-codex</a
+          >
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // Mobile nav toggle — opens/closes the drawer, syncs aria-expanded, and
+      // closes on link click, Escape, or click outside.
+      (function () {
+        var toggle = document.querySelector('.nav-toggle');
+        var nav = document.getElementById('primary-nav');
+        if (!toggle || !nav) return;
+
+        function setOpen(open) {
+          toggle.setAttribute('aria-expanded', String(open));
+          toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+          nav.classList.toggle('is-open', open);
+        }
+
+        toggle.addEventListener('click', function () {
+          setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+        });
+
+        nav.addEventListener('click', function (e) {
+          if (e.target.closest && e.target.closest('a')) setOpen(false);
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+            setOpen(false);
+            toggle.focus();
+          }
+        });
+
+        document.addEventListener('pointerdown', function (e) {
+          if (toggle.getAttribute('aria-expanded') !== 'true') return;
+          if (nav.contains(e.target) || toggle.contains(e.target)) return;
+          setOpen(false);
+        });
+      })();
+
+      // Theme toggle — flips dark ↔ light, persists in localStorage, and
+      // updates the button's aria-label. Active icon / label are picked by
+      // CSS via [data-theme] selectors on <html>. The site default is dark;
+      // OS preference is intentionally not consulted.
+      (function () {
+        var toggle = document.querySelector('.theme-toggle');
+        if (!toggle) return;
+        var root = document.documentElement;
+        function getState() { return root.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+        function refreshLabel() {
+          var state = getState();
+          var next = state === 'dark' ? 'light' : 'dark';
+          toggle.setAttribute(
+            'aria-label',
+            'Theme: ' + state + '. Click to switch to ' + next + '.'
+          );
+        }
+        refreshLabel();
+        toggle.addEventListener('click', function () {
+          var next = getState() === 'dark' ? 'light' : 'dark';
+          root.setAttribute('data-theme', next);
+          try { localStorage.setItem('theme', next); } catch (e) {}
+          refreshLabel();
+        });
+      })();
+    </script>
+  </body>
+</html>
