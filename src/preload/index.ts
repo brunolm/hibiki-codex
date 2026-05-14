@@ -18,6 +18,8 @@ export type Settings = {
   codexModel: string
   claudeUseWsl: boolean
   codexUseWsl: boolean
+  claudeUsePrintMode: boolean
+  codexDangerouslyBypass: boolean
   wslDetectionDone: boolean
   aiPaneWidth: number
   transcriptContextMessages: number
@@ -29,6 +31,7 @@ export type Settings = {
   } | null
   windowMaximized: boolean
   alwaysOnTop: boolean
+  requestTimeoutSeconds: number
 }
 
 export type EngineDetection = { windows: boolean; wsl: boolean }
@@ -126,9 +129,14 @@ const api = {
     }
   },
   ai: {
-    ask: (engine: Engine, message: string, transcript: string): Promise<string> =>
-      ipcRenderer.invoke('ai:ask', engine, message, transcript),
-    cancel: (): Promise<void> => ipcRenderer.invoke('ai:cancel')
+    ask: (
+      id: string,
+      engine: Engine,
+      message: string,
+      transcript: string
+    ): Promise<string> =>
+      ipcRenderer.invoke('ai:ask', id, engine, message, transcript),
+    cancel: (id: string): Promise<void> => ipcRenderer.invoke('ai:cancel', id)
   },
   paths: {
     bundledWhisperVad: (): Promise<string | null> =>

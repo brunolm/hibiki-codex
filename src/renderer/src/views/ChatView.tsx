@@ -22,6 +22,7 @@ type Props = {
   onLoad: () => void
   onClearAi: () => void
   onSubmit: (prompt: string) => void
+  onCancelExchange: (id: string) => void
   needsModel: boolean
   noEngineDetected: boolean
 }
@@ -82,6 +83,7 @@ export function ChatView(props: Props): JSX.Element {
     onLoad,
     onClearAi,
     onSubmit,
+    onCancelExchange,
     needsModel,
     noEngineDetected
   } = props
@@ -401,7 +403,7 @@ export function ChatView(props: Props): JSX.Element {
                         onlyOne
                           ? `${e} (at least one engine must stay selected)`
                           : e === 'claude'
-                            ? 'Claude (claude -p)'
+                            ? 'Claude (claude)'
                             : 'Codex (codex exec)'
                       }
                     >
@@ -494,7 +496,20 @@ export function ChatView(props: Props): JSX.Element {
                       </span>
                     )}
                   </span>
-                  {e.pending && <span className="pending">thinking…</span>}
+                  {e.pending && (
+                    <>
+                      <span className="pending">thinking…</span>
+                      <button
+                        type="button"
+                        className="ai-abort"
+                        onClick={() => onCancelExchange(e.id)}
+                        title="Abort this request"
+                        aria-label="Abort this request"
+                      >
+                        Abort
+                      </button>
+                    </>
+                  )}
                 </header>
                 <div className="ai-prompt">{e.prompt}</div>
                 {e.response !== null && (

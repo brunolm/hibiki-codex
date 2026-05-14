@@ -255,16 +255,32 @@ ipcMain.handle(
   'ai:ask',
   async (
     _e,
+    id: string,
     engine: settings.Engine,
     message: string,
     transcriptOverride: string
   ) => {
-    return ai.ask(engine, message, transcriptOverride ?? transcript.recent())
+    try {
+      return await ai.ask(
+        id,
+        engine,
+        message,
+        transcriptOverride ?? transcript.recent()
+      )
+    } catch (err) {
+      // If the user aborted this request, swallow whatever error came back
+      // (CanceledError from a clean kill, or a non-zero exit from a race).
+      // The renderer already removed the card; there's nothing useful to show.
+      if (err instanceof ai.CanceledError || ai.wasCanceled(id)) {
+        return ''
+      }
+      throw err
+    }
   }
 )
 
-ipcMain.handle('ai:cancel', () => {
-  ai.cancel()
+ipcMain.handle('ai:cancel', (_e, id: string) => {
+  ai.cancel(id)
 })
 
 ipcMain.handle('paths:bundledWhisperVad', () => bundledWhisperVad())

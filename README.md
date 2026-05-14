@@ -9,7 +9,7 @@ A Windows desktop app that:
 1. Captures **WASAPI loopback** from your default playback device.
 2. Transcribes it locally with **whisper.cpp** (auto-detected, Japanese, or
    English) into a live chat-style scrolling transcript.
-3. Lets you ask **Claude** (`claude -p`) or **OpenAI Codex** (`codex exec`) — or
+3. Lets you ask **Claude** (`claude`) or **OpenAI Codex** (`codex exec`) — or
    both at once — about what you've been hearing. Responses appear in a side
    panel with the recent transcript automatically attached as context.
 
@@ -25,7 +25,7 @@ src/main/
   transcribe.ts                whisper-cli wrapper, cancel-on-Stop
   transcribeLoop.ts            interval scheduler that feeds transcribe.ts
   transcript.ts                in-memory transcript store
-  ai.ts                        spawns claude -p / codex exec, WSL wrapper
+  ai.ts                        spawns claude / codex exec, WSL wrapper
   aiDetect.ts                  async parallel probes for claude/codex on PATH + WSL
   aiInstall.ts                 winget install of Claude Code on Windows
   paths.ts                     bundled VAD + userData/{whisper-runtime,models}/ paths
@@ -75,11 +75,10 @@ installed, and verify each step before moving on.
 3. Install at least one AI CLI (skip whichever ones are already there).
    Either Windows-side on PATH, or inside the default WSL distro — the app
    detects both and offers a "Use WSL" toggle per engine.
-   - Claude Code:   npm install -g @anthropic-ai/claude-code
-                    (Windows-only alternative: leave it missing here; the
-                    app's Settings → Claude tab will offer a one-click
-                    `winget install Anthropic.ClaudeCode` button when the
-                    user opens it.)
+   - Claude Code:   winget install Anthropic.ClaudeCode
+                    (or leave it missing here; the app's Settings → Claude
+                    tab will offer a one-click install button when the user
+                    opens it.)
    - OpenAI Codex:  npm install -g @openai/codex   (no in-app installer)
    Verify with `claude --version` and/or `codex --version`.
 
@@ -191,7 +190,7 @@ bun run typecheck
 | Field | Notes |
 |-------|------|
 | Detection row | Shows whether `claude` is on Windows PATH and/or in WSL. The tab pulses if neither side is usable. |
-| Use WSL | Run `wsl claude -p …` instead of the Windows-side binary. |
+| Use WSL | Run `wsl claude …` instead of the Windows-side binary. |
 | Install panel | Shown when Claude isn't detected on the active backend. On Windows, **Install via winget** runs the install live. |
 | Model | e.g. `opus` / `sonnet` / `haiku`, or a model id. Empty = engine default. |
 | Effort | `low` / `medium` / `high` / `xhigh`. Empty = engine default. |

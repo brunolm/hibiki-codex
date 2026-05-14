@@ -523,6 +523,21 @@ textarea {
   font-size: 0.75rem;
   color: var(--warn);
 }
+.ai-abort {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.3;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.ai-abort:hover {
+  color: var(--warn);
+  border-color: var(--warn);
+}
 .ai-prompt {
   font-size: 0.85rem;
   color: var(--text-dim);
@@ -620,6 +635,28 @@ textarea {
 .settings label > span {
   font-size: 0.8rem;
   color: var(--text-dim);
+}
+.settings label.checkbox-row {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.55rem;
+  cursor: pointer;
+}
+.settings label.checkbox-row > input {
+  margin: 0.2rem 0 0 0;
+  flex: 0 0 auto;
+}
+.settings label.checkbox-row > span {
+  display: block;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.settings label.checkbox-row > span small {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 .settings .row {
   display: grid;

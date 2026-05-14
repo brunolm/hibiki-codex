@@ -12,11 +12,12 @@ type Props = {
   onRecheckEngines: () => Promise<void> | void
 }
 
-type Tab = 'whisper' | 'claude' | 'codex'
+type Tab = 'general' | 'whisper' | 'claude' | 'codex'
 
 // Which Settings keys each tab owns — used by per-tab Reset to scope itself
 // to only the fields visible in the active tab.
 const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
+  general: ['requestTimeoutSeconds'],
   whisper: [
     'whisperExe',
     'whisperModel',
@@ -27,8 +28,8 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'transcribeIntervalSeconds',
     'audioBufferSeconds'
   ],
-  claude: ['claudeUseWsl', 'claudeModel', 'claudeEffort'],
-  codex: ['codexUseWsl', 'codexModel']
+  claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
+  codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel']
 }
 
 // Mirrors the defaults in src/main/settings.ts. Keep these two in sync — the
@@ -49,12 +50,15 @@ const DEFAULTS: Settings = {
   codexModel: '',
   claudeUseWsl: false,
   codexUseWsl: false,
+  claudeUsePrintMode: false,
+  codexDangerouslyBypass: false,
   wslDetectionDone: false,
   aiPaneWidth: 480,
   transcriptContextMessages: 50,
   windowBounds: null,
   windowMaximized: false,
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  requestTimeoutSeconds: 300
 }
 
 function copyTabFields(from: Settings, into: Settings, t: Tab): Settings {
@@ -77,7 +81,7 @@ export function SettingsView({
   detectedEngines,
   onRecheckEngines
 }: Props): JSX.Element {
-  const [tab, setTab] = useState<Tab>('whisper')
+  const [tab, setTab] = useState<Tab>('general')
   const [draft, setDraft] = useState<Settings>(settings)
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -130,6 +134,7 @@ export function SettingsView({
   const canResetCurrentTab = tabDiffers(draft, DEFAULTS, tab)
 
   const tabLabels: Record<Tab, string> = {
+    general: 'General',
     whisper: 'Whisper',
     claude: 'Claude',
     codex: 'Codex'
@@ -142,6 +147,14 @@ export function SettingsView({
       <div className="settings">
         <div className="settings-inner">
           <nav className="settings-tabs" role="tablist">
+            <button
+              role="tab"
+              aria-selected={tab === 'general'}
+              className={tab === 'general' ? 'active' : ''}
+              onClick={() => setTab('general')}
+            >
+              General
+            </button>
             <button
               role="tab"
               aria-selected={tab === 'whisper'}
@@ -183,6 +196,36 @@ export function SettingsView({
               Codex
             </button>
           </nav>
+
+          {tab === 'general' && (
+            <section className="settings-section">
+              <label>
+                <span>
+                  Request timeout (seconds)
+                  <span
+                    className="help-icon"
+                    role="img"
+                    aria-label="help"
+                    title="Hard ceiling on a single AI request. When it fires, the spawned claude/codex process is killed and the request errors out. 300s = 5 minutes."
+                  >
+                    ?
+                  </span>
+                </span>
+                <input
+                  type="number"
+                  min={10}
+                  max={3600}
+                  value={draft.requestTimeoutSeconds ?? DEFAULTS.requestTimeoutSeconds}
+                  onChange={(e) =>
+                    set('requestTimeoutSeconds', Number(e.target.value))
+                  }
+                />
+                <small>
+                  Kills the claude/codex process if it runs longer than this.
+                </small>
+              </label>
+            </section>
+          )}
 
           {tab === 'whisper' && (
             <section className="settings-section">
@@ -413,6 +456,23 @@ export function SettingsView({
                 <code>~/.claude/settings.json</code> defaults.
               </p>
 
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={draft.claudeUsePrintMode}
+                  onChange={(e) =>
+                    set('claudeUsePrintMode', e.target.checked)
+                  }
+                />
+                <span>
+                  Use print mode (<code>-p</code>)
+                  <small>
+                    Counts against a separate usage quota from interactive
+                    Claude Code sessions. Off by default.
+                  </small>
+                </span>
+              </label>
+
               <label>
                 <span>Model</span>
                 <input
@@ -463,6 +523,26 @@ export function SettingsView({
                 Empty fields fall back to your{' '}
                 <code>~/.codex/config.toml</code> defaults.
               </p>
+
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={draft.codexDangerouslyBypass}
+                  onChange={(e) =>
+                    set('codexDangerouslyBypass', e.target.checked)
+                  }
+                />
+                <span>
+                  Use <code>--dangerously-bypass-approvals-and-sandbox</code>
+                  <small>
+                    Skips every approval prompt and the sandbox. Off by
+                    default — codex runs with <code>-a on-request</code> and
+                    decides when to pause for approval; if it does, there's no
+                    stdin to answer on so the request will hang until you
+                    cancel.
+                  </small>
+                </span>
+              </label>
 
               <label>
                 <span>Model</span>

@@ -41,6 +41,15 @@ export type Settings = {
   // binary. Useful when the user installed the CLI inside their WSL distro.
   claudeUseWsl: boolean
   codexUseWsl: boolean
+  // When true, pass `-p` (print mode) to claude. Print mode counts against a
+  // separate usage quota from the interactive Claude Code REPL, so users who
+  // want to keep this app's calls off their main subscription can opt in.
+  claudeUsePrintMode: boolean
+  // When true, pass `--dangerously-bypass-approvals-and-sandbox` to codex —
+  // fully unattended (no approval prompts, no sandbox). Default: false, which
+  // runs codex in `-a on-request` "autopilot-ish" mode: codex decides when it
+  // needs to ask before running a command.
+  codexDangerouslyBypass: boolean
   // One-time gate: have we already pre-applied WSL defaults based on detection?
   wslDetectionDone: boolean
   // UI: width of the AI response panel in pixels.
@@ -53,6 +62,9 @@ export type Settings = {
   windowMaximized: boolean
   // Keep the window above all other windows (pin-on-top).
   alwaysOnTop: boolean
+  // Hard timeout for a single AI request, in seconds. The spawned claude/codex
+  // process is killed when this fires and the caller sees a timeout error.
+  requestTimeoutSeconds: number
 }
 
 const defaults: Settings = {
@@ -70,12 +82,15 @@ const defaults: Settings = {
   codexModel: '',
   claudeUseWsl: false,
   codexUseWsl: false,
+  claudeUsePrintMode: false,
+  codexDangerouslyBypass: false,
   wslDetectionDone: false,
   aiPaneWidth: 480,
   transcriptContextMessages: 50,
   windowBounds: null,
   windowMaximized: false,
-  alwaysOnTop: false
+  alwaysOnTop: false,
+  requestTimeoutSeconds: 300
 }
 
 let filePath = ''

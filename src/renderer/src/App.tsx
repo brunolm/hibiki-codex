@@ -280,6 +280,7 @@ export function App(): JSX.Element {
       newExchanges.map(async (ex) => {
         try {
           const response = await window.api.ai.ask(
+            ex.id,
             ex.engine,
             prompt,
             transcriptContext
@@ -307,6 +308,11 @@ export function App(): JSX.Element {
         }
       })
     )
+  }
+
+  function cancelExchange(id: string): void {
+    void window.api.ai.cancel(id)
+    setExchanges((xs) => xs.filter((e) => e.id !== id))
   }
 
   return (
@@ -413,6 +419,7 @@ export function App(): JSX.Element {
           onLoad={loadTranscript}
           onClearAi={() => setExchanges([])}
           onSubmit={submitPrompt}
+          onCancelExchange={cancelExchange}
           needsModel={needsModel}
           noEngineDetected={noEngineDetected}
         />
