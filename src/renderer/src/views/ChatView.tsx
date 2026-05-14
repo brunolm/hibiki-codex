@@ -30,6 +30,31 @@ const ENGINES: Engine[] = ['claude', 'codex']
 const MIN_AI_WIDTH = 280
 const MAX_AI_WIDTH = 900
 
+const HISTORY_STORAGE_KEY = 'hibiki:chat-input-history'
+const HISTORY_MAX = 50
+
+function loadInputHistory(): string[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    const out: string[] = []
+    for (const x of parsed) if (typeof x === 'string') out.push(x)
+    return out.slice(-HISTORY_MAX)
+  } catch {
+    return []
+  }
+}
+
+function saveInputHistory(history: string[]): void {
+  try {
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history))
+  } catch {
+    // localStorage may be unavailable; history just won't persist.
+  }
+}
+
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`
   if (ms < 10000) return `${(ms / 1000).toFixed(1)}s`
@@ -118,8 +143,32 @@ export function ChatView(props: Props): JSX.Element {
     }
   }
   const [input, setInput] = useState('')
+  const [inputHistory, setInputHistory] = useState<string[]>(() => loadInputHistory())
+  const historyIndexRef = useRef<number | null>(null)
+  const draftRef = useRef<string>('')
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const escTimerRef = useRef<number | null>(null)
+
+  function moveCaretToEnd(): void {
+    requestAnimationFrame(() => {
+      const el = textareaRef.current
+      if (!el) return
+      const end = el.value.length
+      el.selectionStart = end
+      el.selectionEnd = end
+    })
+  }
+
+  function moveCaretToStart(): void {
+    requestAnimationFrame(() => {
+      const el = textareaRef.current
+      if (!el) return
+      el.selectionStart = 0
+      el.selectionEnd = 0
+      el.scrollTop = 0
+    })
+  }
 
   useEffect(() => {
     return () => {
@@ -138,6 +187,15 @@ export function ChatView(props: Props): JSX.Element {
     if (!text || sendBlocked) return
     onSubmit(text)
     setInput('')
+    setInputHistory((h) => {
+      const last = h.length > 0 ? h[h.length - 1] : undefined
+      const next = last === text ? h : [...h, text]
+      const trimmed = next.length > HISTORY_MAX ? next.slice(-HISTORY_MAX) : next
+      saveInputHistory(trimmed)
+      return trimmed
+    })
+    historyIndexRef.current = null
+    draftRef.current = ''
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
@@ -146,12 +204,55 @@ export function ChatView(props: Props): JSX.Element {
       submit()
       return
     }
+    if (e.key === 'ArrowUp' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      const ta = e.currentTarget
+      if (
+        ta.selectionStart === 0 &&
+        ta.selectionEnd === 0 &&
+        inputHistory.length > 0
+      ) {
+        e.preventDefault()
+        if (historyIndexRef.current === null) {
+          draftRef.current = input
+          historyIndexRef.current = inputHistory.length - 1
+        } else if (historyIndexRef.current > 0) {
+          historyIndexRef.current -= 1
+        } else {
+          return
+        }
+        setInput(inputHistory[historyIndexRef.current] ?? '')
+        moveCaretToStart()
+        return
+      }
+    }
+    if (e.key === 'ArrowDown' && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      const ta = e.currentTarget
+      const atEnd =
+        ta.selectionStart === ta.value.length &&
+        ta.selectionEnd === ta.value.length
+      if (atEnd && historyIndexRef.current !== null) {
+        e.preventDefault()
+        const next = historyIndexRef.current + 1
+        if (next >= inputHistory.length) {
+          historyIndexRef.current = null
+          setInput(draftRef.current)
+          draftRef.current = ''
+        } else {
+          historyIndexRef.current = next
+          setInput(inputHistory[next] ?? '')
+        }
+        moveCaretToEnd()
+        return
+      }
+    }
     if (e.key === 'Escape') {
       e.preventDefault()
       if (escTimerRef.current !== null) {
         window.clearTimeout(escTimerRef.current)
         escTimerRef.current = null
         setInput('')
+        historyIndexRef.current = null
+        draftRef.current = ''
       } else {
         escTimerRef.current = window.setTimeout(() => {
           escTimerRef.current = null
@@ -276,10 +377,11 @@ export function ChatView(props: Props): JSX.Element {
 
         <div className="composer">
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Ask the AI about what you've heard…  (Enter to send · Shift+Enter for newline · Esc Esc to clear)"
+            placeholder="Ask the AI about what you've heard…  (Enter to send · Shift+Enter for newline · ↑/↓ history · Esc Esc to clear)"
             rows={3}
           />
           <div className="composer-controls">
