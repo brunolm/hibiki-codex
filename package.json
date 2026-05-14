@@ -1,7 +1,7 @@
 {
   "name": "hibiki-codex",
   "productName": "Hibiki Codex",
-  "version": "0.0.3-beta",
+  "version": "0.0.4-beta",
   "description": "Live system-audio transcription with an AI sidekick (Claude / Codex). hibikicodex.com",
   "homepage": "https://hibikicodex.com",
   "repository": {
