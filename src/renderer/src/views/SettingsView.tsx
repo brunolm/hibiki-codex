@@ -28,7 +28,9 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'transcribeMaxLanes',
     'transcribeIntervalSeconds',
     'audioBufferSeconds',
-    'captureMicrophone'
+    'captureMicrophone',
+    'captureProcessName',
+    'captureProcessMode'
   ],
   claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
   codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel'],
@@ -48,6 +50,8 @@ const DEFAULTS: Settings = {
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
   captureMicrophone: false,
+  captureProcessName: '',
+  captureProcessMode: 'include',
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',
@@ -468,6 +472,13 @@ export function SettingsView({
                   </small>
                 </span>
               </label>
+
+              <ProcessCapturePicker
+                name={draft.captureProcessName}
+                mode={draft.captureProcessMode}
+                onNameChange={(v) => set('captureProcessName', v)}
+                onModeChange={(v) => set('captureProcessMode', v)}
+              />
             </section>
           )}
 
@@ -719,6 +730,76 @@ export function SettingsView({
         </div>
       )}
     </>
+  )
+}
+
+function ProcessCapturePicker({
+  name,
+  mode,
+  onNameChange,
+  onModeChange
+}: {
+  name: string
+  mode: 'include' | 'exclude'
+  onNameChange: (v: string) => void
+  onModeChange: (v: 'include' | 'exclude') => void
+}): JSX.Element {
+  const [processes, setProcesses] = useState<string[] | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function refresh(): Promise<void> {
+    setLoading(true)
+    try {
+      const list = await window.api.processes.list()
+      setProcesses(list)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <label>
+      <span>
+        Capture from process (per-app loopback)
+      </span>
+      <div className="row">
+        <input
+          list="hibiki-process-list"
+          value={name}
+          onChange={(e) => onNameChange(e.target.value)}
+          placeholder="(empty = whole-system loopback)  ·  e.g. Discord.exe"
+        />
+        <select
+          value={mode}
+          onChange={(e) => onModeChange(e.target.value as 'include' | 'exclude')}
+          title="include = capture this app + its child processes; exclude = capture everything else"
+        >
+          <option value="include">include tree</option>
+          <option value="exclude">exclude tree</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          disabled={loading}
+          title="Refresh the list of running processes"
+        >
+          {loading ? '…' : 'Refresh'}
+        </button>
+      </div>
+      <datalist id="hibiki-process-list">
+        {(processes ?? []).map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
+      <small>
+        Captures audio from a single Windows process via{' '}
+        <code>AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK</code>. Needs
+        Windows 10 2004+. Click <strong>Refresh</strong>, then pick from the
+        dropdown — the picker shows every running <code>.exe</code>, not just
+        the ones with active audio sessions. Leave the field empty to fall
+        back to whole-system loopback. Takes effect on the next Start.
+      </small>
+    </label>
   )
 }
 

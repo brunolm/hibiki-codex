@@ -40,6 +40,15 @@ export type Settings = {
   // handing off to whisper. Lets the user transcribe a conversation that
   // includes their own voice without configuring a separate mic capture.
   captureMicrophone: boolean
+  // When non-empty, capture audio from this process (and its tree by
+  // default) via AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK instead of the
+  // whole-system loopback. Value is an executable basename ("Discord.exe").
+  // Requires Windows 10 2004+ at runtime.
+  captureProcessName: string
+  // 'include' captures the target PID and every descendant; 'exclude'
+  // captures everything *except* that tree (useful for "everything but
+  // Discord", or for capturing your DAW while muting the browser).
+  captureProcessMode: 'include' | 'exclude'
   // Engines to run when a prompt is submitted. At least one.
   aiEngines: Engine[]
   // Per-engine overrides. Empty string = use the engine's own default
@@ -91,6 +100,8 @@ const defaults: Settings = {
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
   captureMicrophone: false,
+  captureProcessName: '',
+  captureProcessMode: 'include',
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',

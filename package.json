@@ -50,6 +50,10 @@
         "to": "wasapi-loopback.ps1"
       },
       {
+        "from": "resources/wasapi-process.ps1",
+        "to": "wasapi-process.ps1"
+      },
+      {
         "from": "resources/app-icon.png",
         "to": "app-icon.png"
       },

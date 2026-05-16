@@ -1,4 +1,4 @@
-import { spawn, type ChildProcessByStdio } from 'node:child_process'
+import { spawn, execFile, type ChildProcessByStdio } from 'node:child_process'
 import type { Readable } from 'node:stream'
 import { app } from 'electron'
 import { join } from 'node:path'
@@ -215,17 +215,123 @@ function resolveLoopbackScript(): string {
   return join(__dirname, '..', '..', 'resources', 'wasapi-loopback.ps1')
 }
 
-export function startAudioCapture(): void {
+function resolveProcessScript(): string {
+  if (app.isPackaged) {
+    return join(process.resourcesPath, 'wasapi-process.ps1')
+  }
+  return join(__dirname, '..', '..', 'resources', 'wasapi-process.ps1')
+}
+
+// Resolve an executable basename (e.g. "Discord.exe") to a PID via tasklist.
+// Returns the lowest-numbered matching PID; with the AUDIOCLIENT process
+// loopback INCLUDE-TREE mode this is fine for multi-process apps because the
+// tree rooted at any one of their PIDs still covers the audio session.
+export function listAudioCapableProcessNames(): Promise<string[]> {
+  return new Promise((resolve) => {
+    execFile(
+      'tasklist.exe',
+      ['/NH', '/FO', 'CSV'],
+      { windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
+      (err, stdout) => {
+        if (err) {
+          resolve([])
+          return
+        }
+        const names = new Set<string>()
+        for (const raw of stdout.split(/\r?\n/)) {
+          const line = raw.trim()
+          if (!line) continue
+          // CSV with quoted fields. First field is the image name.
+          const m = /^"([^"]+)"/.exec(line)
+          if (!m) continue
+          const name = m[1]!
+          if (!/\.exe$/i.test(name)) continue
+          names.add(name)
+        }
+        resolve(Array.from(names).sort((a, b) => a.localeCompare(b)))
+      }
+    )
+  })
+}
+
+function resolveProcessPid(imageName: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    const normalized = /\.exe$/i.test(imageName) ? imageName : `${imageName}.exe`
+    execFile(
+      'tasklist.exe',
+      ['/NH', '/FO', 'CSV', '/FI', `IMAGENAME eq ${normalized}`],
+      { windowsHide: true, maxBuffer: 4 * 1024 * 1024 },
+      (err, stdout) => {
+        if (err) {
+          resolve(null)
+          return
+        }
+        // CSV fields: "Image Name","PID","Session Name","Session#","Mem Usage"
+        const pids: number[] = []
+        for (const raw of stdout.split(/\r?\n/)) {
+          const line = raw.trim()
+          if (!line) continue
+          const m = /^"[^"]+","(\d+)"/.exec(line)
+          if (!m) continue
+          const pid = Number(m[1])
+          if (Number.isFinite(pid)) pids.push(pid)
+        }
+        if (pids.length === 0) {
+          resolve(null)
+          return
+        }
+        // INCLUDE_TREE captures descendants too — picking the smallest PID
+        // (= oldest, usually the root parent) maximises the chance of
+        // capturing every renderer/helper child of multi-process apps.
+        pids.sort((a, b) => a - b)
+        resolve(pids[0] ?? null)
+      }
+    )
+  })
+}
+
+export async function startAudioCapture(): Promise<void> {
   if (started) return
   started = true
 
-  const script = resolveLoopbackScript()
   const psh = process.env['AUDIO_POWERSHELL'] || 'pwsh'
   const settings = getSettings()
   const mixMic = settings.captureMicrophone === true
+  const targetProcess = settings.captureProcessName?.trim() ?? ''
+
+  // Choose between system-loopback and per-process loopback for the primary
+  // source. Mic mixing (if on) runs independently below.
+  let loopArgs: string[]
+  let sourceLabel: string
+  if (targetProcess) {
+    const pid = await resolveProcessPid(targetProcess)
+    if (pid === null) {
+      started = false
+      log(
+        `process loopback target "${targetProcess}" is not running — start it first or clear Settings → Whisper → Capture from process`,
+        'error'
+      )
+      return
+    }
+    const procScript = resolveProcessScript()
+    const mode = settings.captureProcessMode === 'exclude' ? 'exclude' : 'include'
+    loopArgs = [
+      '-NoProfile',
+      '-File',
+      procScript,
+      '-ProcessId',
+      String(pid),
+      '-Mode',
+      mode
+    ]
+    sourceLabel = `process loopback (${targetProcess} pid=${pid} mode=${mode})`
+  } else {
+    loopArgs = ['-NoProfile', '-File', resolveLoopbackScript()]
+    sourceLabel = 'WASAPI loopback'
+  }
 
   try {
-    proc = spawn(psh, ['-NoProfile', '-File', script], {
+    proc = spawn(psh, loopArgs, {
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe']
     })
@@ -237,8 +343,8 @@ export function startAudioCapture(): void {
 
   log(
     mixMic
-      ? `capturing WASAPI loopback + microphone (buffer ${settings.audioBufferSeconds}s)`
-      : `capturing WASAPI loopback (buffer ${settings.audioBufferSeconds}s)`
+      ? `capturing ${sourceLabel} + microphone (buffer ${settings.audioBufferSeconds}s)`
+      : `capturing ${sourceLabel} (buffer ${settings.audioBufferSeconds}s)`
   )
 
   proc.stdout.on('data', (chunk: Buffer) => {
@@ -266,9 +372,12 @@ export function startAudioCapture(): void {
   if (!mixMic) return
 
   try {
+    // The mic uses the system loopback script in microphone mode — even when
+    // the primary loop source is a per-process capture, the user's mic is a
+    // global device, not part of any one app's tree.
     micProc = spawn(
       psh,
-      ['-NoProfile', '-File', script, '-Mode', 'microphone'],
+      ['-NoProfile', '-File', resolveLoopbackScript(), '-Mode', 'microphone'],
       { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }
     )
     micActive = true

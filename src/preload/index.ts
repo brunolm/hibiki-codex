@@ -18,6 +18,8 @@ export type Settings = {
   transcribeIntervalSeconds: number
   audioBufferSeconds: number
   captureMicrophone: boolean
+  captureProcessName: string
+  captureProcessMode: 'include' | 'exclude'
   aiEngines: Engine[]
   claudeModel: string
   claudeEffort: string
@@ -201,6 +203,9 @@ const api = {
       ipcRenderer.on('install:log', fn)
       return () => ipcRenderer.off('install:log', fn)
     }
+  },
+  processes: {
+    list: (): Promise<string[]> => ipcRenderer.invoke('processes:list')
   },
   platform: process.platform as NodeJS.Platform,
   window: {

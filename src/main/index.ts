@@ -188,7 +188,7 @@ ipcMain.handle('transcribe:start', async () => {
       'Configure a whisper executable and model in Settings (use the Download… buttons if you don\'t have them yet).'
     )
   }
-  audio.startAudioCapture()
+  await audio.startAudioCapture()
   send('transcribe:status', { running: true, warming: true })
   try {
     await warmupWhisper()
@@ -294,6 +294,8 @@ ipcMain.handle('paths:recheckEngines', () => {
 ipcMain.handle('install:claude', async () => {
   return aiInstall.installClaude((line) => send('install:log', line))
 })
+
+ipcMain.handle('processes:list', () => audio.listAudioCapableProcessNames())
 
 ipcMain.handle('updater:getStatus', () => updater.getStatus())
 ipcMain.handle('updater:check', () => updater.check())
