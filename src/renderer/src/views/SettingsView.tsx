@@ -1077,6 +1077,7 @@ function ProcessCapturePicker({
     <label data-tour={dataTour}>
       <span>
         Capture from process (per-app loopback)
+        <span className="beta-tag">beta</span>
       </span>
       <div className="row">
         <input
