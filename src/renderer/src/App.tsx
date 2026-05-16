@@ -422,6 +422,7 @@ export function App(): JSX.Element {
           onCancelExchange={cancelExchange}
           needsModel={needsModel}
           noEngineDetected={noEngineDetected}
+          promptTemplates={settings?.promptTemplates ?? []}
         />
       ) : settings ? (
         <SettingsView

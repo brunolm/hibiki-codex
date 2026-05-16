@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { DetectedEngines, Settings } from '../../../preload'
+import type { DetectedEngines, PromptTemplate, Settings } from '../../../preload'
 import { EngineIcon } from '../components/EngineIcon'
 import { ClaudeInstallPanel } from '../components/ClaudeInstallPanel'
 import { ModelDownloadModal } from '../components/ModelDownloadModal'
 import { WhisperRuntimeDownloadModal } from '../components/WhisperRuntimeDownloadModal'
+import { BUILT_IN_TEMPLATES } from '../promptTemplates'
 
 type Props = {
   settings: Settings
@@ -12,7 +13,7 @@ type Props = {
   onRecheckEngines: () => Promise<void> | void
 }
 
-type Tab = 'general' | 'whisper' | 'claude' | 'codex'
+type Tab = 'general' | 'whisper' | 'claude' | 'codex' | 'templates'
 
 // Which Settings keys each tab owns — used by per-tab Reset to scope itself
 // to only the fields visible in the active tab.
@@ -29,7 +30,8 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'audioBufferSeconds'
   ],
   claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
-  codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel']
+  codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel'],
+  templates: ['promptTemplates']
 }
 
 // Mirrors the defaults in src/main/settings.ts. Keep these two in sync — the
@@ -58,7 +60,8 @@ const DEFAULTS: Settings = {
   windowBounds: null,
   windowMaximized: false,
   alwaysOnTop: false,
-  requestTimeoutSeconds: 300
+  requestTimeoutSeconds: 300,
+  promptTemplates: []
 }
 
 function copyTabFields(from: Settings, into: Settings, t: Tab): Settings {
@@ -137,7 +140,8 @@ export function SettingsView({
     general: 'General',
     whisper: 'Whisper',
     claude: 'Claude',
-    codex: 'Codex'
+    codex: 'Codex',
+    templates: 'Templates'
   }
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings)
@@ -194,6 +198,14 @@ export function SettingsView({
             >
               <EngineIcon engine="codex" size={13} />
               Codex
+            </button>
+            <button
+              role="tab"
+              aria-selected={tab === 'templates'}
+              className={tab === 'templates' ? 'active' : ''}
+              onClick={() => setTab('templates')}
+            >
+              Templates
             </button>
           </nav>
 
@@ -558,6 +570,32 @@ export function SettingsView({
             </section>
           )}
 
+          {tab === 'templates' && (
+            <section className="settings-section">
+              <p className="hint">
+                Type <code>/</code> in the chat composer to summon templates by
+                name. Built-in entries are always available; user entries below
+                override built-ins with the same name and add new ones.
+              </p>
+
+              <TemplatesEditor
+                templates={draft.promptTemplates}
+                onChange={(t) => set('promptTemplates', t)}
+              />
+
+              <details className="templates-builtin">
+                <summary>Built-in templates</summary>
+                <ul>
+                  {BUILT_IN_TEMPLATES.map((t) => (
+                    <li key={t.name}>
+                      <code>/{t.name}</code> — {t.body}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </section>
+          )}
+
           <div className="actions">
             <div className="actions-left">
               <button
@@ -660,6 +698,67 @@ export function SettingsView({
         </div>
       )}
     </>
+  )
+}
+
+function TemplatesEditor({
+  templates,
+  onChange
+}: {
+  templates: PromptTemplate[]
+  onChange: (next: PromptTemplate[]) => void
+}): JSX.Element {
+  function update(i: number, patch: Partial<PromptTemplate>): void {
+    onChange(templates.map((t, j) => (j === i ? { ...t, ...patch } : t)))
+  }
+  function remove(i: number): void {
+    onChange(templates.filter((_, j) => j !== i))
+  }
+  function add(): void {
+    onChange([...templates, { name: '', body: '' }])
+  }
+  return (
+    <div className="templates-editor">
+      {templates.length === 0 ? (
+        <p className="hint dim">No custom templates yet.</p>
+      ) : (
+        templates.map((t, i) => (
+          <div key={i} className="template-row">
+            <div className="template-row-head">
+              <label className="template-name">
+                <span>Name</span>
+                <input
+                  value={t.name}
+                  onChange={(e) => update(i, { name: e.target.value })}
+                  placeholder="my-prompt"
+                  spellCheck={false}
+                />
+              </label>
+              <button
+                type="button"
+                className="danger"
+                onClick={() => remove(i)}
+                title="Remove this template"
+              >
+                Remove
+              </button>
+            </div>
+            <label className="template-body">
+              <span>Body</span>
+              <textarea
+                value={t.body}
+                rows={3}
+                onChange={(e) => update(i, { body: e.target.value })}
+                placeholder="What this template should ask the AI…"
+              />
+            </label>
+          </div>
+        ))
+      )}
+      <button type="button" onClick={add}>
+        + Add template
+      </button>
+    </div>
   )
 }
 

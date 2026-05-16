@@ -3,6 +3,11 @@ import { contextBridge, ipcRenderer } from 'electron'
 export type Engine = 'claude' | 'codex'
 export type Language = 'auto' | 'en' | 'ja'
 
+export type PromptTemplate = {
+  name: string
+  body: string
+}
+
 export type Settings = {
   whisperExe: string
   whisperModel: string
@@ -32,6 +37,7 @@ export type Settings = {
   windowMaximized: boolean
   alwaysOnTop: boolean
   requestTimeoutSeconds: number
+  promptTemplates: PromptTemplate[]
 }
 
 export type EngineDetection = { windows: boolean; wsl: boolean }

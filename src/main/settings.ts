@@ -18,6 +18,11 @@ export type WindowBounds = {
   height: number
 }
 
+export type PromptTemplate = {
+  name: string
+  body: string
+}
+
 export type Settings = {
   whisperExe: string
   whisperModel: string
@@ -65,6 +70,10 @@ export type Settings = {
   // Hard timeout for a single AI request, in seconds. The spawned claude/codex
   // process is killed when this fires and the caller sees a timeout error.
   requestTimeoutSeconds: number
+  // User-defined slash-command prompt templates. Built-in templates are added
+  // at the renderer; user entries here can override built-ins by name and
+  // extend the list with anything the user finds themselves typing often.
+  promptTemplates: PromptTemplate[]
 }
 
 const defaults: Settings = {
@@ -90,7 +99,8 @@ const defaults: Settings = {
   windowBounds: null,
   windowMaximized: false,
   alwaysOnTop: false,
-  requestTimeoutSeconds: 300
+  requestTimeoutSeconds: 300,
+  promptTemplates: []
 }
 
 let filePath = ''

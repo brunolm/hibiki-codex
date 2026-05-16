@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import type { Engine, TranscribeStatus } from '../../../preload'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { Engine, PromptTemplate, TranscribeStatus } from '../../../preload'
 import type { AiExchange, TranscriptMessage } from '../App'
 import { EngineIcon } from '../components/EngineIcon'
+import { filterTemplates, mergeTemplates } from '../promptTemplates'
 import hibikiImg from '../assets/hibiki.png'
 import warmupImg from '../assets/warmup.png'
 
@@ -25,6 +26,7 @@ type Props = {
   onCancelExchange: (id: string) => void
   needsModel: boolean
   noEngineDetected: boolean
+  promptTemplates: PromptTemplate[]
 }
 
 const ENGINES: Engine[] = ['claude', 'codex']
@@ -104,7 +106,8 @@ export function ChatView(props: Props): JSX.Element {
     onSubmit,
     onCancelExchange,
     needsModel,
-    noEngineDetected
+    noEngineDetected,
+    promptTemplates
   } = props
 
   const sendBlocked = needsModel || noEngineDetected
@@ -174,6 +177,37 @@ export function ChatView(props: Props): JSX.Element {
   const copyTimerRef = useRef<number | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
   const [stickToBottom, setStickToBottom] = useState(true)
+
+  const allTemplates = useMemo(
+    () => mergeTemplates(promptTemplates),
+    [promptTemplates]
+  )
+  // The palette is open when the input starts with "/" and the slash token
+  // (everything before the first whitespace) is at most one word — i.e. the
+  // user hasn't typed past the command name yet.
+  const slashMatch = /^\/(\S*)$/.exec(input)
+  const paletteOpen = slashMatch !== null
+  const paletteMatches = paletteOpen
+    ? filterTemplates(allTemplates, slashMatch![1] ?? '')
+    : []
+  const [paletteIndex, setPaletteIndex] = useState(0)
+  useEffect(() => {
+    if (paletteIndex >= paletteMatches.length) setPaletteIndex(0)
+  }, [paletteMatches.length, paletteIndex])
+
+  function applyTemplate(t: PromptTemplate): void {
+    setInput(t.body)
+    historyIndexRef.current = null
+    draftRef.current = ''
+    requestAnimationFrame(() => {
+      const el = textareaRef.current
+      if (!el) return
+      const end = el.value.length
+      el.selectionStart = end
+      el.selectionEnd = end
+      el.focus()
+    })
+  }
 
   useEffect(() => {
     return () => {
@@ -265,6 +299,35 @@ export function ChatView(props: Props): JSX.Element {
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>): void {
+    if (paletteOpen && paletteMatches.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setPaletteIndex((i) => (i + 1) % paletteMatches.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setPaletteIndex((i) =>
+          i <= 0 ? paletteMatches.length - 1 : i - 1
+        )
+        return
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        applyTemplate(paletteMatches[paletteIndex]!)
+        return
+      }
+      if (e.key === 'Tab') {
+        e.preventDefault()
+        applyTemplate(paletteMatches[paletteIndex]!)
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setInput('')
+        return
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       submit()
@@ -458,12 +521,38 @@ export function ChatView(props: Props): JSX.Element {
         </div>
 
         <div className="composer">
+          {paletteOpen && paletteMatches.length > 0 && (
+            <div className="slash-palette" role="listbox" aria-label="Prompt templates">
+              {paletteMatches.map((t, i) => (
+                <button
+                  key={t.name}
+                  type="button"
+                  role="option"
+                  aria-selected={i === paletteIndex}
+                  className={
+                    i === paletteIndex
+                      ? 'slash-palette-item active'
+                      : 'slash-palette-item'
+                  }
+                  onMouseEnter={() => setPaletteIndex(i)}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    applyTemplate(t)
+                  }}
+                  title={t.body}
+                >
+                  <span className="slash-palette-name">/{t.name}</span>
+                  <span className="slash-palette-body">{t.body}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Ask the AI about what you've heard…  (Enter to send · Shift+Enter for newline · ↑/↓ history · Esc Esc to clear)"
+            placeholder="Ask the AI about what you've heard…  (Enter to send · Shift+Enter for newline · / for templates · ↑/↓ history · Esc Esc to clear)"
             rows={3}
           />
           <div className="composer-controls">
