@@ -679,6 +679,13 @@ textarea {
 .composer {
   position: relative;
 }
+.settings-subhead {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
 .templates-editor {
   display: flex;
   flex-direction: column;

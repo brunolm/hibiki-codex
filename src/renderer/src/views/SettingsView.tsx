@@ -13,12 +13,12 @@ type Props = {
   onRecheckEngines: () => Promise<void> | void
 }
 
-type Tab = 'general' | 'whisper' | 'claude' | 'codex' | 'templates'
+type Tab = 'general' | 'whisper' | 'claude' | 'codex'
 
 // Which Settings keys each tab owns — used by per-tab Reset to scope itself
 // to only the fields visible in the active tab.
 const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
-  general: ['requestTimeoutSeconds'],
+  general: ['requestTimeoutSeconds', 'promptTemplates'],
   whisper: [
     'whisperExe',
     'whisperModel',
@@ -35,8 +35,7 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'whisperDiarizeModel'
   ],
   claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
-  codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel'],
-  templates: ['promptTemplates']
+  codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel']
 }
 
 // Mirrors the defaults in src/main/settings.ts. Keep these two in sync — the
@@ -155,8 +154,7 @@ export function SettingsView({
     general: 'General',
     whisper: 'Whisper',
     claude: 'Claude',
-    codex: 'Codex',
-    templates: 'Templates'
+    codex: 'Codex'
   }
 
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings)
@@ -214,14 +212,6 @@ export function SettingsView({
               <EngineIcon engine="codex" size={13} />
               Codex
             </button>
-            <button
-              role="tab"
-              aria-selected={tab === 'templates'}
-              className={tab === 'templates' ? 'active' : ''}
-              onClick={() => setTab('templates')}
-            >
-              Templates
-            </button>
           </nav>
 
           {tab === 'general' && (
@@ -251,6 +241,29 @@ export function SettingsView({
                   Kills the claude/codex process if it runs longer than this.
                 </small>
               </label>
+
+              <h3 className="settings-subhead">Prompt templates</h3>
+              <p className="hint">
+                Type <code>/</code> in the chat composer to summon templates
+                by name. Built-in entries are always available; user entries
+                below override built-ins with the same name and add new ones.
+              </p>
+
+              <TemplatesEditor
+                templates={draft.promptTemplates}
+                onChange={(t) => set('promptTemplates', t)}
+              />
+
+              <details className="templates-builtin">
+                <summary>Built-in templates</summary>
+                <ul>
+                  {BUILT_IN_TEMPLATES.map((t) => (
+                    <li key={t.name}>
+                      <code>/{t.name}</code> — {t.body}
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </section>
           )}
 
@@ -668,32 +681,6 @@ export function SettingsView({
                   Passed as <code>--model &lt;value&gt;</code>.
                 </small>
               </label>
-            </section>
-          )}
-
-          {tab === 'templates' && (
-            <section className="settings-section">
-              <p className="hint">
-                Type <code>/</code> in the chat composer to summon templates by
-                name. Built-in entries are always available; user entries below
-                override built-ins with the same name and add new ones.
-              </p>
-
-              <TemplatesEditor
-                templates={draft.promptTemplates}
-                onChange={(t) => set('promptTemplates', t)}
-              />
-
-              <details className="templates-builtin">
-                <summary>Built-in templates</summary>
-                <ul>
-                  {BUILT_IN_TEMPLATES.map((t) => (
-                    <li key={t.name}>
-                      <code>/{t.name}</code> — {t.body}
-                    </li>
-                  ))}
-                </ul>
-              </details>
             </section>
           )}
 
