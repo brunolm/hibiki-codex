@@ -35,6 +35,7 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'audioBufferSeconds',
     'captureMicrophone',
     'captureMicrophoneDevice',
+    'captureLoopbackDevice',
     'captureProcessName',
     'captureProcessMode',
     'whisperDiarize',
@@ -58,6 +59,7 @@ const DEFAULTS: Settings = {
   audioBufferSeconds: 300,
   captureMicrophone: false,
   captureMicrophoneDevice: '',
+  captureLoopbackDevice: '',
   captureProcessName: '',
   captureProcessMode: 'include',
   whisperDiarize: false,
@@ -558,14 +560,47 @@ export function SettingsView({
               <p className="hint">
                 Microphone mix is toggled from the <strong>mic button</strong>{' '}
                 next to <em>Start</em> in the chat view — flip it any time,
-                including mid-capture. The dropdown below picks which input
-                device the mix uses.
+                including mid-capture. The pickers below choose which devices
+                the capture pipeline reads from.
               </p>
 
-              <MicDevicePicker
+              <DevicePicker
+                title="Microphone device"
                 deviceId={draft.captureMicrophoneDevice}
                 onDeviceIdChange={(v) => set('captureMicrophoneDevice', v)}
-                enabled={true}
+                listDevices={() => window.api.audio.listInputDevices()}
+                testDevice={(id) =>
+                  window.api.audio.testMicrophone(id, 2000)
+                }
+                defaultPrefix="default capture device"
+                helpText={
+                  <>
+                    Picks which input device the mic-mix uses. Click{' '}
+                    <strong>Test</strong> to verify the device is producing
+                    audio.
+                  </>
+                }
+                noSignalHint="No signal — speak into the device, or pick a different one and Test again."
+              />
+
+              <DevicePicker
+                title="Audio output device (loopback source)"
+                deviceId={draft.captureLoopbackDevice}
+                onDeviceIdChange={(v) => set('captureLoopbackDevice', v)}
+                listDevices={() => window.api.audio.listOutputDevices()}
+                testDevice={(id) => window.api.audio.testLoopback(id, 2000)}
+                defaultPrefix="default playback device"
+                helpText={
+                  <>
+                    Picks which output endpoint WASAPI loopback captures from.
+                    Default = whatever Windows is currently playing through.
+                    Has no effect when <em>Capture from process</em> is set —
+                    per-app loopback isn&apos;t bound to one endpoint. Test
+                    needs something to be playing through the selected device
+                    or peak will read 0.
+                  </>
+                }
+                noSignalHint="No signal — play audio through the selected device, or it's already routed elsewhere."
               />
 
               <ProcessCapturePicker
@@ -834,14 +869,31 @@ export function SettingsView({
   )
 }
 
-function MicDevicePicker({
+// Generic device-picker for both capture (microphone) and render (loopback)
+// endpoints. The two pickers behave identically — only the labels, the
+// list/test functions, and the test-success copy differ.
+function DevicePicker({
+  title,
   deviceId,
   onDeviceIdChange,
-  enabled
+  listDevices,
+  testDevice,
+  defaultPrefix,
+  helpText,
+  noSignalHint,
+  enabled = true
 }: {
+  title: string
   deviceId: string
   onDeviceIdChange: (v: string) => void
-  enabled: boolean
+  listDevices: () => Promise<InputDevice[]>
+  testDevice: (
+    id: string
+  ) => Promise<{ peak: number; samples: number }>
+  defaultPrefix: string
+  helpText: React.ReactNode
+  noSignalHint: string
+  enabled?: boolean
 }): JSX.Element {
   const [devices, setDevices] = useState<InputDevice[] | null>(null)
   const [loadingList, setLoadingList] = useState(false)
@@ -855,7 +907,7 @@ function MicDevicePicker({
   async function refresh(): Promise<void> {
     setLoadingList(true)
     try {
-      const list = await window.api.audio.listInputDevices()
+      const list = await listDevices()
       setDevices(list)
     } finally {
       setLoadingList(false)
@@ -866,13 +918,16 @@ function MicDevicePicker({
   // user opens this tab and forgets to hit Refresh.
   useEffect(() => {
     void refresh()
+    // listDevices is a stable function reference per render in practice; we
+    // intentionally only run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function test(): Promise<void> {
     setTesting(true)
     setTestResult(null)
     try {
-      const r = await window.api.audio.testMicrophone(deviceId, 2000)
+      const r = await testDevice(deviceId)
       setTestResult(r)
     } catch (e) {
       setTestResult({ error: (e as Error).message })
@@ -892,7 +947,7 @@ function MicDevicePicker({
 
   return (
     <label>
-      <span>Microphone device</span>
+      <span>{title}</span>
       <div className="row">
         <select
           value={deviceId}
@@ -900,7 +955,7 @@ function MicDevicePicker({
           disabled={!enabled}
         >
           <option value="">
-            (default capture device
+            ({defaultPrefix}
             {devices?.find((d) => d.isDefault)
               ? ` — ${devices.find((d) => d.isDefault)!.name}`
               : ''}
@@ -917,7 +972,7 @@ function MicDevicePicker({
           type="button"
           onClick={() => void refresh()}
           disabled={loadingList}
-          title="Re-enumerate input devices"
+          title="Re-enumerate devices"
         >
           {loadingList ? '…' : 'Refresh'}
         </button>
@@ -943,14 +998,11 @@ function MicDevicePicker({
           <small className={detected ? 'mic-ok' : 'required'}>
             {detected
               ? `✓ Signal detected · peak ${dbfs.toFixed(1)} dBFS`
-              : '✗ No signal — speak into the device, or pick a different one and Test again.'}
+              : `✗ ${noSignalHint}`}
           </small>
         </div>
       ) : (
-        <small>
-          Picks which input device the mic-mix uses. Click <strong>Test</strong>{' '}
-          to verify the device is producing audio.
-        </small>
+        <small>{helpText}</small>
       )}
     </label>
   )

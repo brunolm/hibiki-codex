@@ -146,16 +146,17 @@ export function getAudioSince(
 
 export type InputDevice = { id: string; name: string; isDefault: boolean }
 
-// Spawn the WASAPI script in list-inputs mode and parse the JSON it emits to
-// stdout. Resolves to [] on any failure so the UI just shows an empty picker
-// instead of crashing.
-export function listInputDevices(): Promise<InputDevice[]> {
+// Spawn the WASAPI script in list-{inputs,outputs} mode and parse the JSON
+// it emits. Resolves to [] on any failure so the UI just shows an empty
+// picker instead of crashing.
+function listEndpoints(direction: 'inputs' | 'outputs'): Promise<InputDevice[]> {
   return new Promise((resolve) => {
     const psh = process.env['AUDIO_POWERSHELL'] || 'pwsh'
     const script = resolveLoopbackScript()
+    const mode = direction === 'inputs' ? 'list-inputs' : 'list-outputs'
     const child = spawn(
       psh,
-      ['-NoProfile', '-File', script, '-Mode', 'list-inputs'],
+      ['-NoProfile', '-File', script, '-Mode', mode],
       { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }
     )
     let out = ''
@@ -169,7 +170,7 @@ export function listInputDevices(): Promise<InputDevice[]> {
     child.on('error', () => resolve([]))
     child.on('exit', (code) => {
       if (code !== 0) {
-        log(`list-inputs exited ${code}: ${err.trim().slice(0, 300)}`, 'warn')
+        log(`${mode} exited ${code}: ${err.trim().slice(0, 300)}`, 'warn')
         resolve([])
         return
       }
@@ -187,17 +188,28 @@ export function listInputDevices(): Promise<InputDevice[]> {
   })
 }
 
-// Run a short microphone capture and return the peak 16-bit absolute sample
-// amplitude (0..32767) so the Settings → Test button can give the user
-// concrete feedback that the picked device is actually producing audio.
-export function testMicrophone(
+export function listInputDevices(): Promise<InputDevice[]> {
+  return listEndpoints('inputs')
+}
+
+export function listOutputDevices(): Promise<InputDevice[]> {
+  return listEndpoints('outputs')
+}
+
+// Run a short WASAPI capture against the picked device and return the peak
+// 16-bit absolute sample amplitude (0..32767). Used by both the mic and
+// audio-output Settings → Test buttons so the user can verify the picked
+// device is actually producing audio without committing to a full Start.
+function peakCapture(
+  mode: 'microphone' | 'loopback',
   deviceId: string,
-  durationMs: number = 2000
+  durationMs: number,
+  logTag: string
 ): Promise<{ peak: number; samples: number }> {
   return new Promise((resolve) => {
     const psh = process.env['AUDIO_POWERSHELL'] || 'pwsh'
     const script = resolveLoopbackScript()
-    const args = ['-NoProfile', '-File', script, '-Mode', 'microphone']
+    const args = ['-NoProfile', '-File', script, '-Mode', mode]
     if (deviceId) args.push('-DeviceId', deviceId)
     const child = spawn(psh, args, {
       windowsHide: true,
@@ -224,15 +236,32 @@ export function testMicrophone(
     }, durationMs)
     child.on('exit', () => {
       clearTimeout(timer)
-      if (err.trim()) log(`[mic-test] ${err.trim().slice(0, 300)}`, 'warn')
+      if (err.trim()) log(`[${logTag}] ${err.trim().slice(0, 300)}`, 'warn')
       resolve({ peak, samples })
     })
     child.on('error', (e) => {
       clearTimeout(timer)
-      log(`mic test spawn error: ${e.message}`, 'warn')
+      log(`${logTag} spawn error: ${e.message}`, 'warn')
       resolve({ peak: 0, samples: 0 })
     })
   })
+}
+
+export function testMicrophone(
+  deviceId: string,
+  durationMs: number = 2000
+): Promise<{ peak: number; samples: number }> {
+  return peakCapture('microphone', deviceId, durationMs, 'mic-test')
+}
+
+// Probe loopback (system audio) for `durationMs` and report the peak
+// amplitude. Result is 0 if nothing is playing — WASAPI loopback emits no
+// packets during system-wide silence.
+export function testLoopback(
+  deviceId: string,
+  durationMs: number = 2000
+): Promise<{ peak: number; samples: number }> {
+  return peakCapture('loopback', deviceId, durationMs, 'loopback-test')
 }
 
 function pushStaging(s: Staging, chunk: Uint8Array): void {
@@ -450,7 +479,15 @@ export async function startAudioCapture(): Promise<void> {
     sourceLabel = `process loopback (${targetProcess} pid=${pid} mode=${mode})`
   } else {
     loopArgs = ['-NoProfile', '-File', resolveLoopbackScript()]
-    sourceLabel = 'WASAPI loopback'
+    // Pin the loopback to a specific render endpoint when the user has
+    // picked one. Empty = let the script fall back to GetDefaultAudioEndpoint
+    // (whatever Windows is currently playing through).
+    if (settings.captureLoopbackDevice) {
+      loopArgs.push('-DeviceId', settings.captureLoopbackDevice)
+      sourceLabel = `WASAPI loopback (device=${settings.captureLoopbackDevice})`
+    } else {
+      sourceLabel = 'WASAPI loopback'
+    }
   }
 
   try {

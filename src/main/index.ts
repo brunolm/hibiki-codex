@@ -298,10 +298,16 @@ ipcMain.handle('install:claude', async () => {
 ipcMain.handle('processes:list', () => audio.listAudioCapableProcessNames())
 
 ipcMain.handle('audio:listInputDevices', () => audio.listInputDevices())
+ipcMain.handle('audio:listOutputDevices', () => audio.listOutputDevices())
 ipcMain.handle(
   'audio:testMicrophone',
   (_e, deviceId: string, durationMs?: number) =>
     audio.testMicrophone(deviceId, durationMs)
+)
+ipcMain.handle(
+  'audio:testLoopback',
+  (_e, deviceId: string, durationMs?: number) =>
+    audio.testLoopback(deviceId, durationMs)
 )
 ipcMain.handle(
   'audio:setCaptureMicrophone',

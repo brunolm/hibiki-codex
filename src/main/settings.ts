@@ -43,6 +43,11 @@ export type Settings = {
   // Specific input endpoint to use for the mic mix. Empty = use the default
   // capture endpoint. Set from the Settings → Whisper mic-device dropdown.
   captureMicrophoneDevice: string
+  // Specific render endpoint to capture via WASAPI loopback. Empty = use the
+  // default playback endpoint (the existing behaviour). Has no effect when
+  // `captureProcessName` is set — per-process loopback is not bound to a
+  // single render endpoint.
+  captureLoopbackDevice: string
   // When non-empty, capture audio from this process (and its tree by
   // default) via AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK instead of the
   // whole-system loopback. Value is an executable basename ("Discord.exe").
@@ -114,6 +119,7 @@ const defaults: Settings = {
   audioBufferSeconds: 300,
   captureMicrophone: false,
   captureMicrophoneDevice: '',
+  captureLoopbackDevice: '',
   captureProcessName: '',
   captureProcessMode: 'include',
   whisperDiarize: false,

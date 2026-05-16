@@ -19,6 +19,7 @@ export type Settings = {
   audioBufferSeconds: number
   captureMicrophone: boolean
   captureMicrophoneDevice: string
+  captureLoopbackDevice: string
   captureProcessName: string
   captureProcessMode: 'include' | 'exclude'
   whisperDiarize: boolean
@@ -214,11 +215,18 @@ const api = {
   audio: {
     listInputDevices: (): Promise<InputDevice[]> =>
       ipcRenderer.invoke('audio:listInputDevices'),
+    listOutputDevices: (): Promise<InputDevice[]> =>
+      ipcRenderer.invoke('audio:listOutputDevices'),
     testMicrophone: (
       deviceId: string,
       durationMs?: number
     ): Promise<{ peak: number; samples: number }> =>
       ipcRenderer.invoke('audio:testMicrophone', deviceId, durationMs),
+    testLoopback: (
+      deviceId: string,
+      durationMs?: number
+    ): Promise<{ peak: number; samples: number }> =>
+      ipcRenderer.invoke('audio:testLoopback', deviceId, durationMs),
     setCaptureMicrophone: (enabled: boolean): Promise<void> =>
       ipcRenderer.invoke('audio:setCaptureMicrophone', enabled)
   },

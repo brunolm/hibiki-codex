@@ -8,12 +8,15 @@
 #                      unless -DeviceId is provided).
 #   -Mode list-inputs  prints a JSON array of capture endpoints to stdout
 #                      and exits. No audio is captured.
+#   -Mode list-outputs prints a JSON array of render endpoints to stdout
+#                      and exits. No audio is captured.
 #
-#   -DeviceId <id>     specific endpoint to use (microphone mode only).
-#                      Empty/omitted = use the default capture endpoint.
+#   -DeviceId <id>     specific endpoint to use. Honoured by both loopback
+#                      and microphone modes. Empty/omitted = the default
+#                      endpoint for that direction.
 
 param(
-    [ValidateSet('loopback','microphone','list-inputs')]
+    [ValidateSet('loopback','microphone','list-inputs','list-outputs')]
     [string]$Mode = 'loopback',
     [string]$DeviceId = ''
 )
@@ -324,6 +327,10 @@ Add-Type -TypeDefinition $cs -Language CSharp
 # eCapture = 1 (input devices, used for microphone enumeration / capture)
 if ($Mode -eq 'list-inputs') {
     [WasapiLoopback.Loopback]::ListEndpoints(1)
+    return
+}
+if ($Mode -eq 'list-outputs') {
+    [WasapiLoopback.Loopback]::ListEndpoints(0)
     return
 }
 
