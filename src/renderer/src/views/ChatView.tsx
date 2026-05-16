@@ -67,6 +67,34 @@ function formatDuration(ms: number): string {
   return sec > 0 ? `${min}m ${sec}s` : `${min}m`
 }
 
+// Whisper-cli with --tinydiarize emits "[SPEAKER_TURN]" tokens inline at
+// detected speaker change points. Split the line so the renderer can mark
+// each turn with a visual pill instead of showing the literal token.
+function renderMessageText(text: string): JSX.Element {
+  if (!text.includes('[SPEAKER_TURN]')) {
+    return <>{text}</>
+  }
+  const parts = text.split('[SPEAKER_TURN]')
+  return (
+    <>
+      {parts.map((part, i) => (
+        <span key={i}>
+          {i > 0 && (
+            <span
+              className="speaker-turn"
+              title="Speaker change detected"
+              aria-label="Speaker change"
+            >
+              ⏵
+            </span>
+          )}
+          {part.trim() ? ` ${part.trim()} ` : ''}
+        </span>
+      ))}
+    </>
+  )
+}
+
 function exchangeToMarkdown(e: AiExchange): string {
   const time = new Date(e.at).toLocaleString()
   const lines = [
@@ -500,7 +528,7 @@ export function ChatView(props: Props): JSX.Element {
                     <div className="message-time">
                       {new Date(m.at).toLocaleTimeString()}
                     </div>
-                    <div className="message-text">{m.text}</div>
+                    <div className="message-text">{renderMessageText(m.text)}</div>
                   </div>
                 )
               })

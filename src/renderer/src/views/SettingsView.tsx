@@ -30,7 +30,8 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'audioBufferSeconds',
     'captureMicrophone',
     'captureProcessName',
-    'captureProcessMode'
+    'captureProcessMode',
+    'whisperDiarize'
   ],
   claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
   codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel'],
@@ -52,6 +53,7 @@ const DEFAULTS: Settings = {
   captureMicrophone: false,
   captureProcessName: '',
   captureProcessMode: 'include',
+  whisperDiarize: false,
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',
@@ -479,6 +481,25 @@ export function SettingsView({
                 onNameChange={(v) => set('captureProcessName', v)}
                 onModeChange={(v) => set('captureProcessMode', v)}
               />
+
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={draft.whisperDiarize}
+                  onChange={(e) => set('whisperDiarize', e.target.checked)}
+                />
+                <span>
+                  Speaker diarization
+                  <small>
+                    Pass <code>--tinydiarize</code> to whisper-cli so the
+                    transcript includes <code>[SPEAKER_TURN]</code> markers at
+                    detected speaker change points. Requires a tinydiarize
+                    model — download <strong>Small.en TinyDiarize</strong>{' '}
+                    from the model catalog. The flag is ignored on non-tdrz
+                    models.
+                  </small>
+                </span>
+              </label>
             </section>
           )}
 

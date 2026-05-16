@@ -122,5 +122,15 @@ export const WHISPER_CATALOG: WhisperCatalogModel[] = [
     label: 'Small.en',
     description: 'Balanced. English-only.',
     url: officialUrl('ggml-small.en.bin')
+  },
+  {
+    id: 'small.en-tdrz',
+    filename: 'ggml-small.en-tdrz.bin',
+    sizeBytes: 487617888,
+    group: 'english',
+    label: 'Small.en TinyDiarize',
+    description:
+      'Small.en fine-tuned for speaker-turn detection. Required for the Speaker diarization toggle.',
+    url: officialUrl('ggml-small.en-tdrz.bin')
   }
 ]

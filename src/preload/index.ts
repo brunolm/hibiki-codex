@@ -20,6 +20,7 @@ export type Settings = {
   captureMicrophone: boolean
   captureProcessName: string
   captureProcessMode: 'include' | 'exclude'
+  whisperDiarize: boolean
   aiEngines: Engine[]
   claudeModel: string
   claudeEffort: string

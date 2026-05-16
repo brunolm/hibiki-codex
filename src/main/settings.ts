@@ -49,6 +49,10 @@ export type Settings = {
   // captures everything *except* that tree (useful for "everything but
   // Discord", or for capturing your DAW while muting the browser).
   captureProcessMode: 'include' | 'exclude'
+  // Pass `--tinydiarize` to whisper-cli so emitted text contains
+  // `[SPEAKER_TURN]` markers at detected speaker changes. Only works with
+  // tinydiarize-tuned models (e.g. ggml-small.en-tdrz.bin).
+  whisperDiarize: boolean
   // Engines to run when a prompt is submitted. At least one.
   aiEngines: Engine[]
   // Per-engine overrides. Empty string = use the engine's own default
@@ -102,6 +106,7 @@ const defaults: Settings = {
   captureMicrophone: false,
   captureProcessName: '',
   captureProcessMode: 'include',
+  whisperDiarize: false,
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',

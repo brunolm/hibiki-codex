@@ -88,6 +88,13 @@ export async function transcribeWav(wav: Uint8Array): Promise<string> {
     if (vad) {
       args.push('--vad', '--vad-model', vad)
     }
+    // tinydiarize emits [SPEAKER_TURN] markers inline at detected speaker
+    // change points. Only works on tdrz-tuned models — silently no-op the
+    // flag for non-tdrz models so users don't see a confusing whisper-cli
+    // error when the toggle is on but the loaded model can't honour it.
+    if (s.whisperDiarize && /tdrz/i.test(s.whisperModel)) {
+      args.push('--tinydiarize')
+    }
     const { code, stdout, stderr, killed } = await runProcess(exe, args)
     // If the user clicked Stop, we killed the process — return empty so the
     // tick loop doesn't surface the non-zero exit as an error.
