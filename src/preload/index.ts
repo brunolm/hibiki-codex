@@ -21,6 +21,7 @@ export type Settings = {
   captureProcessName: string
   captureProcessMode: 'include' | 'exclude'
   whisperDiarize: boolean
+  whisperDiarizeModel: string
   aiEngines: Engine[]
   claudeModel: string
   claudeEffort: string

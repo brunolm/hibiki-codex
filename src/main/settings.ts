@@ -53,6 +53,12 @@ export type Settings = {
   // `[SPEAKER_TURN]` markers at detected speaker changes. Only works with
   // tinydiarize-tuned models (e.g. ggml-small.en-tdrz.bin).
   whisperDiarize: boolean
+  // Dedicated path to a tinydiarize-tuned `.bin`. When set and `whisperDiarize`
+  // is on, transcription uses this model instead of `whisperModel` so users
+  // can keep a high-quality main model (e.g. large-v3-turbo) and only swap
+  // to the smaller tdrz model when they need speaker turns. Empty = fall back
+  // to `whisperModel` (which still has to be tdrz-named for the flag to apply).
+  whisperDiarizeModel: string
   // Engines to run when a prompt is submitted. At least one.
   aiEngines: Engine[]
   // Per-engine overrides. Empty string = use the engine's own default
@@ -107,6 +113,7 @@ const defaults: Settings = {
   captureProcessName: '',
   captureProcessMode: 'include',
   whisperDiarize: false,
+  whisperDiarizeModel: '',
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',

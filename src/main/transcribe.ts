@@ -69,6 +69,13 @@ export async function transcribeWav(wav: Uint8Array): Promise<string> {
   }
   if (!s.whisperModel) throw new Error('whisper model is not configured (settings)')
 
+  // When diarize is on, prefer the dedicated diarize-model path so users can
+  // keep a high-quality main model and only swap to the tdrz one when they
+  // need speaker turns. Fall back to the main model otherwise.
+  const diarizeModel =
+    s.whisperDiarize && s.whisperDiarizeModel ? s.whisperDiarizeModel : null
+  const modelPath = diarizeModel ?? s.whisperModel
+
   const tmp = join(
     tmpdir(),
     `hibiki-codex-${Date.now()}-${Math.random().toString(36).slice(2)}.wav`
@@ -76,7 +83,7 @@ export async function transcribeWav(wav: Uint8Array): Promise<string> {
   await writeFile(tmp, wav)
   try {
     const args = [
-      '-m', s.whisperModel,
+      '-m', modelPath,
       '-f', tmp,
       '-l', s.whisperLanguage,
       '-t', String(s.whisperThreads),
@@ -92,7 +99,7 @@ export async function transcribeWav(wav: Uint8Array): Promise<string> {
     // change points. Only works on tdrz-tuned models — silently no-op the
     // flag for non-tdrz models so users don't see a confusing whisper-cli
     // error when the toggle is on but the loaded model can't honour it.
-    if (s.whisperDiarize && /tdrz/i.test(s.whisperModel)) {
+    if (s.whisperDiarize && /tdrz/i.test(modelPath)) {
       args.push('--tinydiarize')
     }
     const { code, stdout, stderr, killed } = await runProcess(exe, args)

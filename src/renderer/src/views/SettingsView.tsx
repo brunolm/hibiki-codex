@@ -31,7 +31,8 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'captureMicrophone',
     'captureProcessName',
     'captureProcessMode',
-    'whisperDiarize'
+    'whisperDiarize',
+    'whisperDiarizeModel'
   ],
   claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
   codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel'],
@@ -54,6 +55,7 @@ const DEFAULTS: Settings = {
   captureProcessName: '',
   captureProcessMode: 'include',
   whisperDiarize: false,
+  whisperDiarizeModel: '',
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',
@@ -100,6 +102,7 @@ export function SettingsView({
   const [bundledVad, setBundledVad] = useState<string | null>(null)
   const [showModelModal, setShowModelModal] = useState(false)
   const [showRuntimeModal, setShowRuntimeModal] = useState(false)
+  const [showDiarizeModelModal, setShowDiarizeModelModal] = useState(false)
 
   useEffect(() => {
     void window.api.paths.bundledWhisperVad().then(setBundledVad)
@@ -117,7 +120,11 @@ export function SettingsView({
   }
 
   async function pick(
-    key: 'whisperExe' | 'whisperModel' | 'whisperVadModel',
+    key:
+      | 'whisperExe'
+      | 'whisperModel'
+      | 'whisperVadModel'
+      | 'whisperDiarizeModel',
     title: string,
     filters: { name: string; extensions: string[] }[]
   ): Promise<void> {
@@ -493,12 +500,53 @@ export function SettingsView({
                   <small>
                     Pass <code>--tinydiarize</code> to whisper-cli so the
                     transcript includes <code>[SPEAKER_TURN]</code> markers at
-                    detected speaker change points. Requires a tinydiarize
-                    model — download <strong>Small.en TinyDiarize</strong>{' '}
-                    from the model catalog. The flag is ignored on non-tdrz
-                    models.
+                    detected speaker change points. When the toggle is on the
+                    diarization model below is used instead of the main
+                    Whisper model.
                   </small>
                 </span>
+              </label>
+
+              <label>
+                <span>
+                  TinyDiarize model
+                  {draft.whisperDiarize && !draft.whisperDiarizeModel && (
+                    <span className="required-tag">required</span>
+                  )}
+                </span>
+                <div className="row">
+                  <input
+                    className={
+                      draft.whisperDiarize && !draft.whisperDiarizeModel
+                        ? 'required-empty'
+                        : ''
+                    }
+                    value={draft.whisperDiarizeModel}
+                    onChange={(e) =>
+                      set('whisperDiarizeModel', e.target.value)
+                    }
+                    placeholder="C:\path\to\ggml-small.en-tdrz.bin"
+                  />
+                  <button
+                    onClick={() =>
+                      pick(
+                        'whisperDiarizeModel',
+                        'Pick a TinyDiarize model',
+                        [{ name: 'GGML model', extensions: ['bin'] }]
+                      )
+                    }
+                  >
+                    Browse
+                  </button>
+                  <button onClick={() => setShowDiarizeModelModal(true)}>
+                    Download…
+                  </button>
+                </div>
+                <small>
+                  Used only while <strong>Speaker diarization</strong> is on.
+                  Leave empty to fall back to the main Whisper model (which
+                  must itself be a tdrz-named file for the flag to apply).
+                </small>
               </label>
             </section>
           )}
@@ -699,6 +747,17 @@ export function SettingsView({
           onInstalled={(exePath) => {
             set('whisperExe', exePath)
             void onSave({ whisperExe: exePath })
+          }}
+        />
+      )}
+      {showDiarizeModelModal && (
+        <ModelDownloadModal
+          title="Download a TinyDiarize model"
+          filter={(m) => /tdrz/i.test(m.filename)}
+          onClose={() => setShowDiarizeModelModal(false)}
+          onDownloaded={(path) => {
+            set('whisperDiarizeModel', path)
+            void onSave({ whisperDiarizeModel: path })
           }}
         />
       )}

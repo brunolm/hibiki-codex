@@ -6,6 +6,12 @@ type Phase = 'choose' | 'downloading' | 'done' | 'error' | 'cancelled'
 type Props = {
   onClose: () => void
   onDownloaded: (path: string) => void
+  // Optional predicate to narrow the catalog (e.g. show only tinydiarize
+  // models for the diarization picker). Default: every catalog entry.
+  filter?: (m: WhisperCatalogModel) => boolean
+  // Optional title shown in the choose phase header. Default: "Download a
+  // Whisper model".
+  title?: string
 }
 
 function fmtBytes(n: number): string {
@@ -24,7 +30,12 @@ function fmtEta(remainingBytes: number, rateBps: number): string {
   return `${(seconds / 3600).toFixed(1)}h`
 }
 
-export function ModelDownloadModal({ onClose, onDownloaded }: Props): JSX.Element {
+export function ModelDownloadModal({
+  onClose,
+  onDownloaded,
+  filter,
+  title
+}: Props): JSX.Element {
   const [models, setModels] = useState<WhisperCatalogModel[]>([])
   const [installed, setInstalled] = useState<Record<string, string>>({})
   const [selected, setSelected] = useState<string | null>(null)
@@ -34,7 +45,8 @@ export function ModelDownloadModal({ onClose, onDownloaded }: Props): JSX.Elemen
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    void window.api.models.list().then((m) => {
+    void window.api.models.list().then((all) => {
+      const m = filter ? all.filter(filter) : all
       setModels(m)
       const rec = m.find((x) => x.recommended) ?? m[0]
       if (rec) setSelected(rec.id)
@@ -42,7 +54,7 @@ export function ModelDownloadModal({ onClose, onDownloaded }: Props): JSX.Elemen
     void window.api.models.listInstalled().then(setInstalled)
     const off = window.api.models.onProgress(setProgress)
     return off
-  }, [])
+  }, [filter])
 
   const selectedInstalledPath = selected ? installed[selected] : undefined
   const selectedIsInstalled = !!selectedInstalledPath
@@ -98,7 +110,7 @@ export function ModelDownloadModal({ onClose, onDownloaded }: Props): JSX.Elemen
       >
         <header className="modal-header">
           <h2>
-            {phase === 'choose' && 'Download a Whisper model'}
+            {phase === 'choose' && (title ?? 'Download a Whisper model')}
             {phase === 'downloading' && `Downloading ${selectedModel?.filename ?? ''}`}
             {phase === 'done' && 'Downloaded'}
             {phase === 'error' && 'Download failed'}
@@ -112,27 +124,33 @@ export function ModelDownloadModal({ onClose, onDownloaded }: Props): JSX.Elemen
         <div className="modal-body">
           {phase === 'choose' && (
             <>
-              <ModelGroup
-                title="Multilingual (Japanese, English, …)"
-                models={ml}
-                selected={selected}
-                onPick={setSelected}
-                installed={installed}
-              />
-              <ModelGroup
-                title="Japanese-tuned (JP only)"
-                models={ja}
-                selected={selected}
-                onPick={setSelected}
-                installed={installed}
-              />
-              <ModelGroup
-                title="English only (smaller, faster)"
-                models={en}
-                selected={selected}
-                onPick={setSelected}
-                installed={installed}
-              />
+              {ml.length > 0 && (
+                <ModelGroup
+                  title="Multilingual (Japanese, English, …)"
+                  models={ml}
+                  selected={selected}
+                  onPick={setSelected}
+                  installed={installed}
+                />
+              )}
+              {ja.length > 0 && (
+                <ModelGroup
+                  title="Japanese-tuned (JP only)"
+                  models={ja}
+                  selected={selected}
+                  onPick={setSelected}
+                  installed={installed}
+                />
+              )}
+              {en.length > 0 && (
+                <ModelGroup
+                  title="English only (smaller, faster)"
+                  models={en}
+                  selected={selected}
+                  onPick={setSelected}
+                  installed={installed}
+                />
+              )}
               {selectedIsInstalled && selectedInstalledPath && (
                 <p className="modal-hint warn">
                   <strong>{selectedModel?.filename}</strong> is already
