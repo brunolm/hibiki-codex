@@ -11,6 +11,9 @@ const animeWhisperUrl = (file: string): string =>
 const kotobaWhisperV2Url = (file: string): string =>
   `https://huggingface.co/kotoba-tech/kotoba-whisper-v2.0-ggml/resolve/e3a0cf6a62b95911703cfb97d819292e058f12c3/${file}`
 
+const tdrzUrl = (file: string): string =>
+  `https://huggingface.co/akashmjn/tinydiarize-whisper.cpp/resolve/d44ba793fc67e509623a88a409723311fa677744/${file}`
+
 export type WhisperCatalogModel = {
   id: string
   filename: string
@@ -126,11 +129,11 @@ export const WHISPER_CATALOG: WhisperCatalogModel[] = [
   {
     id: 'small.en-tdrz',
     filename: 'ggml-small.en-tdrz.bin',
-    sizeBytes: 487617888,
+    sizeBytes: 487614184,
     group: 'english',
     label: 'Small.en TinyDiarize',
     description:
       'Small.en fine-tuned for speaker-turn detection. Required for the Speaker diarization toggle.',
-    url: officialUrl('ggml-small.en-tdrz.bin')
+    url: tdrzUrl('ggml-small.en-tdrz.bin')
   }
 ]
