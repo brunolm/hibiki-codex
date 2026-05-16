@@ -172,6 +172,8 @@ export function ChatView(props: Props): JSX.Element {
   const escTimerRef = useRef<number | null>(null)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const copyTimerRef = useRef<number | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+  const [stickToBottom, setStickToBottom] = useState(true)
 
   useEffect(() => {
     return () => {
@@ -226,8 +228,25 @@ export function ChatView(props: Props): JSX.Element {
   }, [])
 
   useEffect(() => {
+    if (!stickToBottom) return
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+  }, [messages.length, stickToBottom])
+
+  // Track whether the user has scrolled away from the bottom. Anything within
+  // ~40px of the bottom counts as "stuck" so smooth-scroll jitter and 1px
+  // rounding don't accidentally unstick us.
+  function onMessagesScroll(): void {
+    const el = messagesContainerRef.current
+    if (!el) return
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+    const nearBottom = distance <= 40
+    setStickToBottom((prev) => (prev === nearBottom ? prev : nearBottom))
+  }
+
+  function jumpToLatest(): void {
+    setStickToBottom(true)
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   function submit(): void {
     const text = input.trim()
@@ -380,7 +399,12 @@ export function ChatView(props: Props): JSX.Element {
           </div>
         </div>
 
-        <div className="messages">
+        <div className="messages-wrap">
+        <div
+          className="messages"
+          ref={messagesContainerRef}
+          onScroll={onMessagesScroll}
+        >
           {messages.length === 0 ? (
             status.warming ? (
               <div className="empty warmup-empty">
@@ -420,6 +444,17 @@ export function ChatView(props: Props): JSX.Element {
             })()
           )}
           <div ref={messagesEndRef} />
+        </div>
+          {!stickToBottom && messages.length > 0 && (
+            <button
+              type="button"
+              className="jump-to-latest"
+              onClick={jumpToLatest}
+              title="Auto-scroll is paused. Click to jump to the latest message."
+            >
+              ↓ Jump to latest
+            </button>
+          )}
         </div>
 
         <div className="composer">
