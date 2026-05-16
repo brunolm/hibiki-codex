@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { DetectedEngines, PromptTemplate, Settings } from '../../../preload'
+import type {
+  DetectedEngines,
+  InputDevice,
+  PromptTemplate,
+  Settings
+} from '../../../preload'
 import { EngineIcon } from '../components/EngineIcon'
 import { ClaudeInstallPanel } from '../components/ClaudeInstallPanel'
 import { ModelDownloadModal } from '../components/ModelDownloadModal'
@@ -29,6 +34,7 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'transcribeIntervalSeconds',
     'audioBufferSeconds',
     'captureMicrophone',
+    'captureMicrophoneDevice',
     'captureProcessName',
     'captureProcessMode',
     'whisperDiarize',
@@ -51,6 +57,7 @@ const DEFAULTS: Settings = {
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
   captureMicrophone: false,
+  captureMicrophoneDevice: '',
   captureProcessName: '',
   captureProcessMode: 'include',
   whisperDiarize: false,
@@ -487,13 +494,18 @@ export function SettingsView({
                 <span>
                   Mix in microphone
                   <small>
-                    Capture your default microphone alongside system audio and
-                    feed the mix to whisper. Useful for transcribing a call
-                    that includes your own voice. Takes effect on the next
-                    Start.
+                    Capture a microphone alongside system audio and feed the
+                    mix to whisper. Useful for transcribing a call that
+                    includes your own voice. Takes effect on the next Start.
                   </small>
                 </span>
               </label>
+
+              <MicDevicePicker
+                deviceId={draft.captureMicrophoneDevice}
+                onDeviceIdChange={(v) => set('captureMicrophoneDevice', v)}
+                enabled={draft.captureMicrophone}
+              />
 
               <ProcessCapturePicker
                 name={draft.captureProcessName}
@@ -797,6 +809,128 @@ export function SettingsView({
         </div>
       )}
     </>
+  )
+}
+
+function MicDevicePicker({
+  deviceId,
+  onDeviceIdChange,
+  enabled
+}: {
+  deviceId: string
+  onDeviceIdChange: (v: string) => void
+  enabled: boolean
+}): JSX.Element {
+  const [devices, setDevices] = useState<InputDevice[] | null>(null)
+  const [loadingList, setLoadingList] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<
+    | null
+    | { peak: number; samples: number }
+    | { error: string }
+  >(null)
+
+  async function refresh(): Promise<void> {
+    setLoadingList(true)
+    try {
+      const list = await window.api.audio.listInputDevices()
+      setDevices(list)
+    } finally {
+      setLoadingList(false)
+    }
+  }
+
+  // Eagerly populate on first render so the dropdown isn't blank when the
+  // user opens this tab and forgets to hit Refresh.
+  useEffect(() => {
+    void refresh()
+  }, [])
+
+  async function test(): Promise<void> {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const r = await window.api.audio.testMicrophone(deviceId, 2000)
+      setTestResult(r)
+    } catch (e) {
+      setTestResult({ error: (e as Error).message })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const peak =
+    testResult && 'peak' in testResult ? testResult.peak : 0
+  // -50 dBFS ≈ 32767 * 10^(-50/20) ≈ 103 in 16-bit absolute amplitude.
+  const detected = testResult && 'peak' in testResult && peak >= 100
+  const dbfs = peak > 0 ? 20 * Math.log10(peak / 32767) : -Infinity
+  const meterPct = peak > 0
+    ? Math.max(2, Math.min(100, ((dbfs + 60) / 60) * 100))
+    : 0
+
+  return (
+    <label>
+      <span>Microphone device</span>
+      <div className="row">
+        <select
+          value={deviceId}
+          onChange={(e) => onDeviceIdChange(e.target.value)}
+          disabled={!enabled}
+        >
+          <option value="">
+            (default capture device
+            {devices?.find((d) => d.isDefault)
+              ? ` — ${devices.find((d) => d.isDefault)!.name}`
+              : ''}
+            )
+          </option>
+          {(devices ?? []).map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+              {d.isDefault ? '  (default)' : ''}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          disabled={loadingList}
+          title="Re-enumerate input devices"
+        >
+          {loadingList ? '…' : 'Refresh'}
+        </button>
+        <button
+          type="button"
+          onClick={() => void test()}
+          disabled={!enabled || testing}
+          title="Capture 2 seconds from the selected device and show the peak level"
+        >
+          {testing ? 'Listening…' : 'Test'}
+        </button>
+      </div>
+      {testResult && 'error' in testResult ? (
+        <small className="required">Test failed: {testResult.error}</small>
+      ) : testResult ? (
+        <div className="mic-test-result">
+          <div className="mic-meter">
+            <div
+              className="mic-meter-fill"
+              style={{ width: `${meterPct}%` }}
+            />
+          </div>
+          <small className={detected ? 'mic-ok' : 'required'}>
+            {detected
+              ? `✓ Signal detected · peak ${dbfs.toFixed(1)} dBFS`
+              : '✗ No signal — speak into the device, or pick a different one and Test again.'}
+          </small>
+        </div>
+      ) : (
+        <small>
+          Picks which input device the mic-mix uses. Click <strong>Test</strong>{' '}
+          to verify the device is producing audio.
+        </small>
+      )}
+    </label>
   )
 }
 

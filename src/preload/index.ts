@@ -18,6 +18,7 @@ export type Settings = {
   transcribeIntervalSeconds: number
   audioBufferSeconds: number
   captureMicrophone: boolean
+  captureMicrophoneDevice: string
   captureProcessName: string
   captureProcessMode: 'include' | 'exclude'
   whisperDiarize: boolean
@@ -88,6 +89,7 @@ export type WhisperRuntimeProgress = {
 export type TranscribeStatus = { running: boolean; warming: boolean }
 export type TranscribeLine = { text: string; at: number }
 export type AudioLog = { msg: string; level: 'info' | 'warn' | 'error' }
+export type InputDevice = { id: string; name: string; isDefault: boolean }
 
 export type UpdateStatus =
   | { phase: 'idle' }
@@ -208,6 +210,15 @@ const api = {
   },
   processes: {
     list: (): Promise<string[]> => ipcRenderer.invoke('processes:list')
+  },
+  audio: {
+    listInputDevices: (): Promise<InputDevice[]> =>
+      ipcRenderer.invoke('audio:listInputDevices'),
+    testMicrophone: (
+      deviceId: string,
+      durationMs?: number
+    ): Promise<{ peak: number; samples: number }> =>
+      ipcRenderer.invoke('audio:testMicrophone', deviceId, durationMs)
   },
   platform: process.platform as NodeJS.Platform,
   window: {

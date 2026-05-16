@@ -297,6 +297,13 @@ ipcMain.handle('install:claude', async () => {
 
 ipcMain.handle('processes:list', () => audio.listAudioCapableProcessNames())
 
+ipcMain.handle('audio:listInputDevices', () => audio.listInputDevices())
+ipcMain.handle(
+  'audio:testMicrophone',
+  (_e, deviceId: string, durationMs?: number) =>
+    audio.testMicrophone(deviceId, durationMs)
+)
+
 ipcMain.handle('updater:getStatus', () => updater.getStatus())
 ipcMain.handle('updater:check', () => updater.check())
 ipcMain.handle('updater:quitAndInstall', () => updater.quitAndInstall())

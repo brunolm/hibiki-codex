@@ -127,6 +127,97 @@ export function getAudioSince(
   return { wav: buildWav(pcm), newOffset: totalBytesEver, droppedBytes }
 }
 
+export type InputDevice = { id: string; name: string; isDefault: boolean }
+
+// Spawn the WASAPI script in list-inputs mode and parse the JSON it emits to
+// stdout. Resolves to [] on any failure so the UI just shows an empty picker
+// instead of crashing.
+export function listInputDevices(): Promise<InputDevice[]> {
+  return new Promise((resolve) => {
+    const psh = process.env['AUDIO_POWERSHELL'] || 'pwsh'
+    const script = resolveLoopbackScript()
+    const child = spawn(
+      psh,
+      ['-NoProfile', '-File', script, '-Mode', 'list-inputs'],
+      { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }
+    )
+    let out = ''
+    let err = ''
+    child.stdout.on('data', (b: Buffer) => {
+      out += b.toString('utf8')
+    })
+    child.stderr.on('data', (b: Buffer) => {
+      err += b.toString()
+    })
+    child.on('error', () => resolve([]))
+    child.on('exit', (code) => {
+      if (code !== 0) {
+        log(`list-inputs exited ${code}: ${err.trim().slice(0, 300)}`, 'warn')
+        resolve([])
+        return
+      }
+      try {
+        const parsed = JSON.parse(out) as unknown
+        if (!Array.isArray(parsed)) {
+          resolve([])
+          return
+        }
+        resolve(parsed as InputDevice[])
+      } catch {
+        resolve([])
+      }
+    })
+  })
+}
+
+// Run a short microphone capture and return the peak 16-bit absolute sample
+// amplitude (0..32767) so the Settings → Test button can give the user
+// concrete feedback that the picked device is actually producing audio.
+export function testMicrophone(
+  deviceId: string,
+  durationMs: number = 2000
+): Promise<{ peak: number; samples: number }> {
+  return new Promise((resolve) => {
+    const psh = process.env['AUDIO_POWERSHELL'] || 'pwsh'
+    const script = resolveLoopbackScript()
+    const args = ['-NoProfile', '-File', script, '-Mode', 'microphone']
+    if (deviceId) args.push('-DeviceId', deviceId)
+    const child = spawn(psh, args, {
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+    let peak = 0
+    let samples = 0
+    let err = ''
+    child.stdout.on('data', (b: Buffer) => {
+      for (let i = 0; i + 1 < b.length; i += 2) {
+        const s = b.readInt16LE(i)
+        const abs = s < 0 ? -s : s
+        if (abs > peak) peak = abs
+      }
+      samples += b.length / 2
+    })
+    child.stderr.on('data', (b: Buffer) => {
+      err += b.toString()
+    })
+    const timer = setTimeout(() => {
+      try {
+        child.kill()
+      } catch {}
+    }, durationMs)
+    child.on('exit', () => {
+      clearTimeout(timer)
+      if (err.trim()) log(`[mic-test] ${err.trim().slice(0, 300)}`, 'warn')
+      resolve({ peak, samples })
+    })
+    child.on('error', (e) => {
+      clearTimeout(timer)
+      log(`mic test spawn error: ${e.message}`, 'warn')
+      resolve({ peak: 0, samples: 0 })
+    })
+  })
+}
+
 function pushStaging(s: Staging, chunk: Uint8Array): void {
   s.chunks.push(chunk)
   s.bytes += chunk.byteLength
@@ -375,11 +466,20 @@ export async function startAudioCapture(): Promise<void> {
     // The mic uses the system loopback script in microphone mode — even when
     // the primary loop source is a per-process capture, the user's mic is a
     // global device, not part of any one app's tree.
-    micProc = spawn(
-      psh,
-      ['-NoProfile', '-File', resolveLoopbackScript(), '-Mode', 'microphone'],
-      { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }
-    )
+    const micArgs = [
+      '-NoProfile',
+      '-File',
+      resolveLoopbackScript(),
+      '-Mode',
+      'microphone'
+    ]
+    if (settings.captureMicrophoneDevice) {
+      micArgs.push('-DeviceId', settings.captureMicrophoneDevice)
+    }
+    micProc = spawn(psh, micArgs, {
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
     micActive = true
   } catch (err) {
     micActive = false

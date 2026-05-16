@@ -40,6 +40,9 @@ export type Settings = {
   // handing off to whisper. Lets the user transcribe a conversation that
   // includes their own voice without configuring a separate mic capture.
   captureMicrophone: boolean
+  // Specific input endpoint to use for the mic mix. Empty = use the default
+  // capture endpoint. Set from the Settings → Whisper mic-device dropdown.
+  captureMicrophoneDevice: string
   // When non-empty, capture audio from this process (and its tree by
   // default) via AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK instead of the
   // whole-system loopback. Value is an executable basename ("Discord.exe").
@@ -110,6 +113,7 @@ const defaults: Settings = {
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
   captureMicrophone: false,
+  captureMicrophoneDevice: '',
   captureProcessName: '',
   captureProcessMode: 'include',
   whisperDiarize: false,
