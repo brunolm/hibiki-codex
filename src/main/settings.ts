@@ -35,6 +35,11 @@ export type Settings = {
   transcribeMaxLanes: number
   transcribeIntervalSeconds: number
   audioBufferSeconds: number
+  // When true, capture the default microphone alongside system loopback and
+  // mix the two streams (sample-aligned, hard-clipped 16-bit add) before
+  // handing off to whisper. Lets the user transcribe a conversation that
+  // includes their own voice without configuring a separate mic capture.
+  captureMicrophone: boolean
   // Engines to run when a prompt is submitted. At least one.
   aiEngines: Engine[]
   // Per-engine overrides. Empty string = use the engine's own default
@@ -85,6 +90,7 @@ const defaults: Settings = {
   transcribeMaxLanes: 2,
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
+  captureMicrophone: false,
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',

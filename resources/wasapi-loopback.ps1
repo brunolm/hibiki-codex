@@ -1,6 +1,15 @@
-# Captures WASAPI loopback from the current default playback device.
-# Outputs raw 16-bit mono PCM @ 16 kHz to stdout (via WASAPI's built-in
-# AUTOCONVERTPCM resampler). No external dependencies.
+# Captures audio from a default WASAPI endpoint and writes raw 16-bit mono
+# PCM @ 16 kHz to stdout (via WASAPI's built-in AUTOCONVERTPCM resampler).
+# No external dependencies.
+#
+#   -Mode loopback    (default) captures from the default render endpoint
+#                     with the LOOPBACK stream flag — what other apps play.
+#   -Mode microphone  captures from the default capture endpoint — the mic.
+
+param(
+    [ValidateSet('loopback','microphone')]
+    [string]$Mode = 'loopback'
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -85,10 +94,10 @@ namespace WasapiLoopback {
             if (hr != 0) throw new Exception(what + " failed: 0x" + hr.ToString("X8"));
         }
 
-        public static void Run() {
+        public static void Run(int dataFlow, bool useLoopback) {
             var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
             IMMDevice device;
-            Check(enumerator.GetDefaultAudioEndpoint(eRender, eConsole, out device),
+            Check(enumerator.GetDefaultAudioEndpoint(dataFlow, eConsole, out device),
                   "GetDefaultAudioEndpoint");
 
             object audioClientObj;
@@ -109,9 +118,9 @@ namespace WasapiLoopback {
             IntPtr pFmt = Marshal.AllocHGlobal(Marshal.SizeOf(fmt));
             Marshal.StructureToPtr(fmt, pFmt, false);
 
-            uint flags = AUDCLNT_STREAMFLAGS_LOOPBACK
-                       | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
+            uint flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
                        | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+            if (useLoopback) flags |= AUDCLNT_STREAMFLAGS_LOOPBACK;
 
             Check(audioClient.Initialize(AUDCLNT_SHAREMODE_SHARED, flags,
                                          2_000_000L, 0, pFmt, IntPtr.Zero),
@@ -162,4 +171,9 @@ namespace WasapiLoopback {
 '@
 
 Add-Type -TypeDefinition $cs -Language CSharp
-[WasapiLoopback.Loopback]::Run()
+
+# eRender = 0 (output devices, used with LOOPBACK for system audio)
+# eCapture = 1 (input devices, used for microphone)
+$dataFlow = if ($Mode -eq 'microphone') { 1 } else { 0 }
+$useLoopback = ($Mode -eq 'loopback')
+[WasapiLoopback.Loopback]::Run($dataFlow, $useLoopback)

@@ -17,6 +17,7 @@ export type Settings = {
   transcribeMaxLanes: number
   transcribeIntervalSeconds: number
   audioBufferSeconds: number
+  captureMicrophone: boolean
   aiEngines: Engine[]
   claudeModel: string
   claudeEffort: string

@@ -27,7 +27,8 @@ const TAB_FIELDS: Record<Tab, (keyof Settings)[]> = {
     'whisperThreads',
     'transcribeMaxLanes',
     'transcribeIntervalSeconds',
-    'audioBufferSeconds'
+    'audioBufferSeconds',
+    'captureMicrophone'
   ],
   claude: ['claudeUseWsl', 'claudeUsePrintMode', 'claudeModel', 'claudeEffort'],
   codex: ['codexUseWsl', 'codexDangerouslyBypass', 'codexModel'],
@@ -46,6 +47,7 @@ const DEFAULTS: Settings = {
   transcribeMaxLanes: 2,
   transcribeIntervalSeconds: 12,
   audioBufferSeconds: 300,
+  captureMicrophone: false,
   aiEngines: ['claude'],
   claudeModel: '',
   claudeEffort: '',
@@ -447,6 +449,25 @@ export function SettingsView({
                   />
                 </label>
               </div>
+
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={draft.captureMicrophone}
+                  onChange={(e) =>
+                    set('captureMicrophone', e.target.checked)
+                  }
+                />
+                <span>
+                  Mix in microphone
+                  <small>
+                    Capture your default microphone alongside system audio and
+                    feed the mix to whisper. Useful for transcribing a call
+                    that includes your own voice. Takes effect on the next
+                    Start.
+                  </small>
+                </span>
+              </label>
             </section>
           )}
 
