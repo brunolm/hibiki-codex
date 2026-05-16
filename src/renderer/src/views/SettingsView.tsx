@@ -10,6 +10,7 @@ import { ClaudeInstallPanel } from '../components/ClaudeInstallPanel'
 import { ModelDownloadModal } from '../components/ModelDownloadModal'
 import { WhisperRuntimeDownloadModal } from '../components/WhisperRuntimeDownloadModal'
 import { BUILT_IN_TEMPLATES } from '../promptTemplates'
+import { WhisperTour } from './WhisperTour'
 
 type Props = {
   settings: Settings
@@ -115,6 +116,7 @@ export function SettingsView({
   const [whisperSubTab, setWhisperSubTab] = useState<
     'general' | 'models' | 'capture'
   >('general')
+  const [showTour, setShowTour] = useState(false)
 
   useEffect(() => {
     void window.api.paths.bundledWhisperVad().then(setBundledVad)
@@ -282,36 +284,50 @@ export function SettingsView({
 
           {tab === 'whisper' && (
             <section className="settings-section">
-              <nav className="settings-subtabs" role="tablist" aria-label="Whisper sub-tabs">
-                <button
-                  role="tab"
-                  aria-selected={whisperSubTab === 'general'}
-                  className={whisperSubTab === 'general' ? 'active' : ''}
-                  onClick={() => setWhisperSubTab('general')}
+              <div className="settings-subtabs-row">
+                <nav
+                  className="settings-subtabs"
+                  role="tablist"
+                  aria-label="Whisper sub-tabs"
                 >
-                  General
-                </button>
+                  <button
+                    role="tab"
+                    aria-selected={whisperSubTab === 'general'}
+                    className={whisperSubTab === 'general' ? 'active' : ''}
+                    onClick={() => setWhisperSubTab('general')}
+                  >
+                    General
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={whisperSubTab === 'models'}
+                    className={whisperSubTab === 'models' ? 'active' : ''}
+                    onClick={() => setWhisperSubTab('models')}
+                  >
+                    Models
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={whisperSubTab === 'capture'}
+                    className={whisperSubTab === 'capture' ? 'active' : ''}
+                    onClick={() => setWhisperSubTab('capture')}
+                  >
+                    Capture &amp; runtime
+                  </button>
+                </nav>
                 <button
-                  role="tab"
-                  aria-selected={whisperSubTab === 'models'}
-                  className={whisperSubTab === 'models' ? 'active' : ''}
-                  onClick={() => setWhisperSubTab('models')}
+                  type="button"
+                  className="tour-start-btn"
+                  onClick={() => setShowTour(true)}
+                  title="Walk through every Whisper field with explanations"
                 >
-                  Models
+                  ? Help
                 </button>
-                <button
-                  role="tab"
-                  aria-selected={whisperSubTab === 'capture'}
-                  className={whisperSubTab === 'capture' ? 'active' : ''}
-                  onClick={() => setWhisperSubTab('capture')}
-                >
-                  Capture &amp; runtime
-                </button>
-              </nav>
+              </div>
 
               {whisperSubTab === 'models' && (
               <>
-              <label>
+              <label data-tour="whisperExe">
                 <span>
                   Whisper executable
                   {!draft.whisperExe && (
@@ -344,7 +360,7 @@ export function SettingsView({
                 </small>
               </label>
 
-              <label>
+              <label data-tour="whisperModel">
                 <span>
                   Whisper model
                   {!draft.whisperModel && (
@@ -377,7 +393,7 @@ export function SettingsView({
                 </small>
               </label>
 
-              <label>
+              <label data-tour="whisperVadModel">
                 <span>VAD model (optional)</span>
                 <div className="row">
                   <input
@@ -402,7 +418,7 @@ export function SettingsView({
                 <small>Leave empty to use the bundled Silero VAD model.</small>
               </label>
 
-              <label>
+              <label data-tour="whisperDiarizeModel">
                 <span>
                   TinyDiarize model
                   {draft.whisperDiarize && !draft.whisperDiarizeModel && (
@@ -449,7 +465,7 @@ export function SettingsView({
 
               {whisperSubTab === 'general' && (
               <>
-              <label>
+              <label data-tour="language">
                 <span>Language</span>
                 <select
                   value={draft.whisperLanguage}
@@ -472,7 +488,7 @@ export function SettingsView({
               </label>
 
               <div className="grid">
-                <label>
+                <label data-tour="threads">
                   <span>
                     Whisper threads
                     <span
@@ -495,7 +511,7 @@ export function SettingsView({
                   />
                 </label>
 
-                <label>
+                <label data-tour="lanes">
                   <span>
                     Parallel lanes
                     <span
@@ -518,7 +534,7 @@ export function SettingsView({
                   />
                 </label>
 
-                <label>
+                <label data-tour="interval">
                   <span>
                     Transcribe interval (s)
                     <span
@@ -541,7 +557,7 @@ export function SettingsView({
                   />
                 </label>
 
-                <label>
+                <label data-tour="audioBuffer">
                   <span>
                     Audio buffer (s)
                     <span
@@ -578,6 +594,7 @@ export function SettingsView({
 
               <DevicePicker
                 title="Microphone device"
+                dataTour="micDevice"
                 deviceId={draft.captureMicrophoneDevice}
                 onDeviceIdChange={(v) => set('captureMicrophoneDevice', v)}
                 listDevices={() => window.api.audio.listInputDevices()}
@@ -597,6 +614,7 @@ export function SettingsView({
 
               <DevicePicker
                 title="Audio output device (loopback source)"
+                dataTour="loopbackDevice"
                 deviceId={draft.captureLoopbackDevice}
                 onDeviceIdChange={(v) => set('captureLoopbackDevice', v)}
                 listDevices={() => window.api.audio.listOutputDevices()}
@@ -620,9 +638,10 @@ export function SettingsView({
                 mode={draft.captureProcessMode}
                 onNameChange={(v) => set('captureProcessName', v)}
                 onModeChange={(v) => set('captureProcessMode', v)}
+                dataTour="processCapture"
               />
 
-              <label className="checkbox-row">
+              <label className="checkbox-row" data-tour="diarize">
                 <input
                   type="checkbox"
                   checked={draft.whisperDiarize}
@@ -829,6 +848,12 @@ export function SettingsView({
           }}
         />
       )}
+      {showTour && (
+        <WhisperTour
+          onClose={() => setShowTour(false)}
+          onSubTabChange={(sub) => setWhisperSubTab(sub)}
+        />
+      )}
       {confirmResetTab && (
         <div
           className="modal-overlay"
@@ -893,7 +918,8 @@ function DevicePicker({
   defaultPrefix,
   helpText,
   noSignalHint,
-  enabled = true
+  enabled = true,
+  dataTour
 }: {
   title: string
   deviceId: string
@@ -906,6 +932,7 @@ function DevicePicker({
   helpText: React.ReactNode
   noSignalHint: string
   enabled?: boolean
+  dataTour?: string
 }): JSX.Element {
   const [devices, setDevices] = useState<InputDevice[] | null>(null)
   const [loadingList, setLoadingList] = useState(false)
@@ -958,7 +985,7 @@ function DevicePicker({
     : 0
 
   return (
-    <label>
+    <label data-tour={dataTour}>
       <span>{title}</span>
       <div className="row">
         <select
@@ -1024,12 +1051,14 @@ function ProcessCapturePicker({
   name,
   mode,
   onNameChange,
-  onModeChange
+  onModeChange,
+  dataTour
 }: {
   name: string
   mode: 'include' | 'exclude'
   onNameChange: (v: string) => void
   onModeChange: (v: 'include' | 'exclude') => void
+  dataTour?: string
 }): JSX.Element {
   const [processes, setProcesses] = useState<string[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -1045,7 +1074,7 @@ function ProcessCapturePicker({
   }
 
   return (
-    <label>
+    <label data-tour={dataTour}>
       <span>
         Capture from process (per-app loopback)
       </span>
