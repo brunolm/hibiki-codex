@@ -1305,6 +1305,77 @@
       </div>
     </section>
 
+    <section id="capture-options">
+      <div class="container">
+        <h2>More than just system loopback.</h2>
+        <p class="lead">
+          Pick exactly what whisper hears, and how the chat panel reads it
+          back. Every option is switchable from the running app — most of
+          them mid-capture.
+        </p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Mix in your microphone</h3>
+            <p>
+              A 🎤 toggle next to <em>Start</em> lays your default mic on
+              top of system audio in real time — useful for calls where
+              you're a participant, not just a listener. Hard-clipped
+              16-bit mix, dropped automatically when nothing else is
+              playing so your voice still reaches whisper.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Capture a single app</h3>
+            <p>
+              Pin the loopback to one process via
+              <code>AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK</code> —
+              transcribe just Discord, just Spotify, anything you can
+              pick from the running-process list. Include-tree captures
+              child renderers too. Windows 10 2004+. <em>Beta.</em>
+            </p>
+          </div>
+          <div class="card">
+            <h3>Speaker turns</h3>
+            <p>
+              Optional TinyDiarize model (downloaded from the same
+              catalog) adds a <code>⏵ speaker change</code> divider
+              between bubbles wherever whisper detects a new speaker.
+              English-only for now — the underlying tdrz technique was
+              only ever trained on <code>small.en</code>. <em>Beta.</em>
+            </p>
+          </div>
+          <div class="card">
+            <h3>Slash-command prompts</h3>
+            <p>
+              Type <code>/</code> in the composer to summon templates by
+              name — built-ins for summarize / translate / glossary /
+              explain, plus anything you save under Settings → General.
+              Arrow keys to navigate, Enter to insert.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Copy as Markdown</h3>
+            <p>
+              Every AI response card has <strong>copy</strong> and
+              <strong>copy md</strong> buttons. Markdown export bundles
+              engine, timestamp, prompt and response into a single block,
+              ready to paste into a doc or chat thread without losing
+              context.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Auto-update</h3>
+            <p>
+              Packaged builds check this repo's GitHub Releases on
+              launch and download new versions in the background. A
+              small banner appears when one's ready — click
+              <strong>Restart &amp; install</strong> to apply.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="configure">
       <div class="container">
         <h2>How to configure.</h2>

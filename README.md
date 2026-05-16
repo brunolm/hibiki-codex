@@ -21,25 +21,27 @@ future native work.
 
 ```
 src/main/
-  audio.ts                     WASAPI loopback capture (PowerShell ring buffer)
-  transcribe.ts                whisper-cli wrapper, cancel-on-Stop
+  audio.ts                     WASAPI loopback + mic capture, mix pump, device enumeration
+  transcribe.ts                whisper-cli wrapper, cancel-on-Stop, --tinydiarize routing
   transcribeLoop.ts            interval scheduler that feeds transcribe.ts
   transcript.ts                in-memory transcript store
   ai.ts                        spawns claude / codex exec, WSL wrapper
   aiDetect.ts                  async parallel probes for claude/codex on PATH + WSL
   aiInstall.ts                 winget install of Claude Code on Windows
   paths.ts                     bundled VAD + userData/{whisper-runtime,models}/ paths
-  whisperCatalog.ts            curated whisper.cpp model catalog
+  whisperCatalog.ts            curated whisper.cpp model catalog (incl. TinyDiarize)
   modelDownload.ts             streaming model downloader with cancel
   whisperRuntimeCatalog.ts     CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4 variants
   whisperRuntimeDownload.ts    streams zip + pwsh Expand-Archive
+  updater.ts                   electron-updater wiring against GitHub Releases
   settings.ts                  persisted Settings type + JSON file
   index.ts                     IPC handlers, app lifecycle
 src/preload/                   contextBridge → window.api (typed)
-src/renderer/                  React + TS UI (Chat / Settings views)
+src/renderer/                  React + TS UI (Chat / Settings views, Whisper Help tour)
 native/                        Rust crate (napi-rs) compiled to a Node-API .node
 resources/
-  wasapi-loopback.ps1          WASAPI loopback capture script
+  wasapi-loopback.ps1          WASAPI loopback + microphone capture, device list
+  wasapi-process.ps1           per-app loopback via AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK
   whisper/                     auto-fetched Silero VAD (.bin) — runtime is NOT bundled
 scripts/
   fetch-whisper.mjs            build-time fetch of the bundled VAD
@@ -172,18 +174,44 @@ bun run typecheck
 
 ## Configurable in Settings
 
-**Whisper tab**
+Settings has four top-level tabs: **General**, **Whisper**, **Claude**, **Codex**.
+
+**General tab**
+
+| Field | Notes |
+|-------|------|
+| Request timeout (seconds) | Hard ceiling on a single AI request (default 300). When it fires, the spawned `claude`/`codex` process is killed and the request errors out. |
+| Prompt templates editor | Edit user-defined slash-command templates that appear in the chat composer's `/` palette. Per-row name + body; entries override built-ins (`/summarize`, `/translate-en`, `/translate-ja`, `/glossary`, `/explain`, `/quote`) by name. Persists as `promptTemplates` in `settings.json`. |
+
+**Whisper tab** has three sub-tabs (General → Models → Capture & runtime) and a `? Help` button that launches a 13-step guided tour. Each step auto-switches to the right sub-tab, spotlights the field, and explains it inline.
+
+*Whisper → General*
+
+| Field | Notes |
+|-------|------|
+| Language | `auto` (default), `ja`, `en`. Auto-detect adds a little latency. Single-language-tuned models (Anime Whisper, Kotoba Whisper, `*.en`) ignore this. |
+| Whisper threads | Match your fast cores (default 4). |
+| Parallel lanes | Concurrent whisper-cli inferences (default 2, max 8). >1 lets a new chunk start while the previous one finishes — useful when inference > interval. Peak CPU = lanes × threads. |
+| Transcribe interval (s) | Lower = lower latency, more CPU. |
+| Audio buffer (s) | Rolling buffer length (default 300). |
+
+*Whisper → Models*
 
 | Field | Notes |
 |-------|------|
 | Whisper executable | Path to `whisper-cli.exe`. Required. `Download…` opens the runtime variant chooser (CPU / OpenBLAS / CUDA 11.8 / CUDA 12.4 — CUDA 12.4 is the recommended pick). |
 | Whisper model | Path to a `ggml-*.bin`. Required. `Download…` opens the curated model catalog. |
 | VAD model | Optional. Empty → falls back to the bundled Silero VAD. |
-| Language | `auto` (default), `ja`, `en`. Auto-detect adds a little latency. |
-| Whisper threads | Match your fast cores (default 4). |
-| Parallel lanes | Concurrent whisper-cli inferences (default 2, max 8). >1 lets a new chunk start while the previous one finishes — useful when inference > interval. Peak CPU = lanes × threads. |
-| Transcribe interval (s) | Lower = lower latency, more CPU. |
-| Audio buffer (s) | Rolling buffer length. |
+| TinyDiarize model | Optional `.bin` used only when **Speaker diarization** is on. `Download…` opens a tdrz-filtered catalog (currently only `small.en-tdrz`). When set, it overrides the main Whisper model during diarized runs so users can keep a high-quality default and only swap to the smaller tdrz when they need speaker turns. |
+
+*Whisper → Capture & runtime*
+
+| Field | Notes |
+|-------|------|
+| Microphone device | Picks which input device the mic-mix uses. **The mic-mix toggle itself lives on the chat pane header**, not here — this dropdown only chooses the device. `Test` runs a 2 s capture and shows a dBFS level meter. |
+| Audio output device (loopback source) | Picks which playback endpoint WASAPI loopback captures from. Default = whatever Windows is currently playing through. Has no effect when *Capture from process* is set — per-app loopback isn't bound to one endpoint. |
+| Capture from process (beta) | When set to an executable basename (e.g. `Discord.exe`), captures audio from that process via `AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK` instead of system-wide loopback. Requires Windows 10 2004+. `include` mode captures the target + descendants; `exclude` captures everything else. `Refresh` lists running processes from `tasklist`. |
+| Speaker diarization (beta) | Passes `--tinydiarize` to whisper-cli; emitted `[SPEAKER_TURN]` tokens render as a horizontal divider between message bubbles in the chat view. Only works on tdrz-tuned models — set the **TinyDiarize model** under *Models* first. |
 
 **Claude tab** (override `~/.claude/settings.json` defaults)
 
@@ -191,6 +219,7 @@ bun run typecheck
 |-------|------|
 | Detection row | Shows whether `claude` is on Windows PATH and/or in WSL. The tab pulses if neither side is usable. |
 | Use WSL | Run `wsl claude …` instead of the Windows-side binary. |
+| Use print mode (`-p`) | Off by default — claude runs in `--permission-mode auto` with empty-EOF stdin so it doesn't block on permission prompts. On = passes `-p`, which counts against a separate usage quota from the interactive Claude Code REPL. |
 | Install panel | Shown when Claude isn't detected on the active backend. On Windows, **Install via winget** runs the install live. |
 | Model | e.g. `opus` / `sonnet` / `haiku`, or a model id. Empty = engine default. |
 | Effort | `low` / `medium` / `high` / `xhigh`. Empty = engine default. |
@@ -201,6 +230,7 @@ bun run typecheck
 |-------|------|
 | Detection row | Windows PATH + WSL probes, same as the Claude tab. |
 | Use WSL | Run through `wsl codex exec …` (the output-last-message file path is auto-translated to `/mnt/c/...`). |
+| Use `--dangerously-bypass-approvals-and-sandbox` | Off by default — codex runs with `-a on-request` and decides when to pause for approval (it'll hang if it does, since there's no stdin to answer on). On = skips every approval prompt and the sandbox. |
 | Model | e.g. `gpt-5` / `o3`. Empty = engine default. |
 
 **Bottom actions**
@@ -211,13 +241,32 @@ bun run typecheck
 
 ## Chat view
 
-The Chat view's composer has two persisted controls that don't live in the
-Settings tab:
+The Chat view holds several persisted controls that don't live in the
+Settings tab.
+
+**Chat pane header** (next to Start/Stop/Clear):
+
+| Control | Notes |
+|---------|------|
+| 🎤 Mic toggle | Mixes your default microphone (or the device picked under Settings → Whisper → Capture & runtime) into the audio whisper sees. Flippable **live mid-capture** — the main process keeps a runtime flag and spawns/kills the mic process + mix pump on the fly. Persists as `captureMicrophone` in `settings.json`. |
+
+**Composer**:
 
 | Control | Notes |
 |---------|------|
 | Engine picker | Toggle Claude and Codex on/off. At least one stays selected. With both on, every prompt fans out and lands as a card per engine. Persists as `aiEngines` in settings.json. |
 | Context | Latest N transcript messages sent along with the prompt (and highlighted in the live transcript). 0 = no context, 50 by default. Persists as `transcriptContextMessages` in settings.json. |
+| `/` slash palette | Typing `/` at the start of the composer opens a palette of prompt templates. Built-ins (`/summarize`, `/translate-en`, `/translate-ja`, `/glossary`, `/explain`, `/quote`) and user entries from Settings → General both show up. ↑/↓ to navigate, Enter or Tab to insert, Esc to clear. |
+| Input history | Like a shell — ↑ at the start of an empty composer walks back through the last 50 prompts; ↓ walks forward. |
+
+**Per-card actions** on completed AI response cards:
+
+- **copy** — response text only.
+- **copy md** — full exchange (engine, timestamp, prompt, response) as a Markdown block, ready to paste into a doc or chat thread.
+
+**Auto-scroll lock**: the transcript pane pauses auto-scroll when you scroll up. A floating **↓ Jump to latest** pill appears; click it (or scroll back to the bottom yourself) to re-arm auto-scroll.
+
+**Speaker turns** (only when *Speaker diarization* is on): a horizontal divider with an `⏵ SPEAKER CHANGE` pill renders in the gap between message bubbles where whisper emitted a `[SPEAKER_TURN]` token. A single whisper output containing a turn splits into two visually separate bubbles.
 
 The **Send** button auto-disables with a context-specific tooltip when the
 Whisper executable, Whisper model, or all selected AI engines are missing
@@ -231,3 +280,12 @@ Whisper executable, Whisper model, or all selected AI engines are missing
 - The app **remembers its size and position** between launches. If the
   saved position would leave less than 5% of the window visible (e.g. a
   monitor was unplugged), it falls back to centered defaults.
+
+## Auto-update
+
+Packaged builds (NSIS installer and portable) self-update against this
+repo's GitHub Releases via `electron-updater`. On launch the main process
+checks for a newer release; when one is found it downloads in the
+background and the chat view shows a small banner. Click **Restart &
+install** to apply it. Dev runs (`bun run dev`) skip the updater so there
+are no spurious "no update.yml found" errors locally.
