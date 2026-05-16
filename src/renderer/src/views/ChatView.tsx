@@ -65,6 +65,25 @@ function formatDuration(ms: number): string {
   return sec > 0 ? `${min}m ${sec}s` : `${min}m`
 }
 
+function exchangeToMarkdown(e: AiExchange): string {
+  const time = new Date(e.at).toLocaleString()
+  const lines = [
+    `### ${e.engine} · ${time}`,
+    '',
+    `**Prompt:**`,
+    '',
+    e.prompt,
+    ''
+  ]
+  if (e.response !== null && e.response !== '') {
+    lines.push('**Response:**', '', e.response)
+  }
+  if (e.error) {
+    lines.push('**Error:**', '', e.error)
+  }
+  return lines.join('\n')
+}
+
 export function ChatView(props: Props): JSX.Element {
   const {
     messages,
@@ -151,6 +170,32 @@ export function ChatView(props: Props): JSX.Element {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const escTimerRef = useRef<number | null>(null)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const copyTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current)
+    }
+  }, [])
+
+  function flashCopied(key: string): void {
+    setCopiedKey(key)
+    if (copyTimerRef.current !== null) window.clearTimeout(copyTimerRef.current)
+    copyTimerRef.current = window.setTimeout(() => {
+      setCopiedKey(null)
+      copyTimerRef.current = null
+    }, 1200)
+  }
+
+  async function copyText(text: string, key: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text)
+      flashCopied(key)
+    } catch {
+      // Clipboard may be blocked in some contexts; silently skip.
+    }
+  }
 
   function moveCaretToEnd(): void {
     requestAnimationFrame(() => {
@@ -516,6 +561,31 @@ export function ChatView(props: Props): JSX.Element {
                   <div className="ai-response">{e.response}</div>
                 )}
                 {e.error && <div className="ai-error">{e.error}</div>}
+                {!e.pending && (e.response || e.error) && (
+                  <div className="ai-card-actions">
+                    <button
+                      type="button"
+                      className="ai-copy"
+                      onClick={() =>
+                        void copyText(e.response ?? '', `${e.id}:text`)
+                      }
+                      disabled={!e.response}
+                      title="Copy response as plain text"
+                    >
+                      {copiedKey === `${e.id}:text` ? 'copied!' : 'copy'}
+                    </button>
+                    <button
+                      type="button"
+                      className="ai-copy"
+                      onClick={() =>
+                        void copyText(exchangeToMarkdown(e), `${e.id}:md`)
+                      }
+                      title="Copy prompt + response as Markdown"
+                    >
+                      {copiedKey === `${e.id}:md` ? 'copied!' : 'copy md'}
+                    </button>
+                  </div>
+                )}
               </article>
             ))
           )}
