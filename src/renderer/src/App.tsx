@@ -3,7 +3,8 @@ import type {
   DetectedEngines,
   Engine,
   Settings,
-  TranscribeStatus
+  TranscribeStatus,
+  UpdateStatus
 } from '../../preload'
 import { ChatView } from './views/ChatView'
 import { SettingsView } from './views/SettingsView'
@@ -38,10 +39,24 @@ export function App(): JSX.Element {
   const [messages, setMessages] = useState<TranscriptMessage[]>([])
   const [exchanges, setExchanges] = useState<AiExchange[]>([])
   const [notice, setNotice] = useState<string | null>(null)
+  const [updateStatus, setUpdateStatus] = useState<UpdateStatus>({
+    phase: 'idle'
+  })
+  const [updateBannerDismissed, setUpdateBannerDismissed] = useState(false)
 
   useEffect(() => {
     void window.api.settings.get().then(setSettings)
     void window.api.paths.detectedEngines().then(setDetectedEngines)
+    void window.api.updater.getStatus().then(setUpdateStatus)
+    return window.api.updater.onStatus((s) => {
+      setUpdateStatus(s)
+      // A new available/downloaded notification overrides a previous dismissal
+      // — otherwise an update that finishes downloading after the user
+      // dismissed the "available" banner would never show up.
+      if (s.phase === 'available' || s.phase === 'downloaded') {
+        setUpdateBannerDismissed(false)
+      }
+    })
   }, [])
 
   async function recheckEngines(): Promise<void> {
@@ -392,6 +407,54 @@ export function App(): JSX.Element {
       {notice && (
         <div className="notice" onClick={() => setNotice(null)}>
           {notice} <span className="dim">(click to dismiss)</span>
+        </div>
+      )}
+
+      {!updateBannerDismissed && updateStatus.phase === 'available' && (
+        <div className="update-banner">
+          <span>
+            Update available · v{updateStatus.version} · downloading in the
+            background…
+          </span>
+          <button
+            type="button"
+            className="banner-dismiss"
+            onClick={() => setUpdateBannerDismissed(true)}
+            aria-label="Dismiss update banner"
+          >
+            ×
+          </button>
+        </div>
+      )}
+      {!updateBannerDismissed && updateStatus.phase === 'downloading' && (
+        <div className="update-banner">
+          <span>
+            Downloading update… {Math.round(updateStatus.percent)}%
+          </span>
+        </div>
+      )}
+      {!updateBannerDismissed && updateStatus.phase === 'downloaded' && (
+        <div className="update-banner ready">
+          <span>
+            Update v{updateStatus.version} ready. Restart to install.
+          </span>
+          <div className="update-banner-actions">
+            <button
+              type="button"
+              className="primary"
+              onClick={() => void window.api.updater.quitAndInstall()}
+            >
+              Restart &amp; install
+            </button>
+            <button
+              type="button"
+              className="banner-dismiss"
+              onClick={() => setUpdateBannerDismissed(true)}
+              aria-label="Dismiss update banner"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
 

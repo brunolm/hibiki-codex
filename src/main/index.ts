@@ -22,6 +22,7 @@ import {
 import * as ai from './ai'
 import * as aiDetect from './aiDetect'
 import * as aiInstall from './aiInstall'
+import * as updater from './updater'
 
 type NativeApi = {
   hello(name: string): string
@@ -294,6 +295,10 @@ ipcMain.handle('install:claude', async () => {
   return aiInstall.installClaude((line) => send('install:log', line))
 })
 
+ipcMain.handle('updater:getStatus', () => updater.getStatus())
+ipcMain.handle('updater:check', () => updater.check())
+ipcMain.handle('updater:quitAndInstall', () => updater.quitAndInstall())
+
 ipcMain.handle('models:list', () => WHISPER_CATALOG)
 
 ipcMain.handle('models:listInstalled', () => {
@@ -370,6 +375,8 @@ void app.whenReady().then(() => {
   }
   createWindow()
   applyWslDefaults()
+  updater.setEmitter((s) => send('updater:status', s))
+  if (mainWindow) updater.init(mainWindow)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

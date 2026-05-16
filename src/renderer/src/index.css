@@ -199,6 +199,38 @@ textarea {
 }
 .notice .dim { color: var(--text-dim); }
 
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #1a2638;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.update-banner.ready {
+  background: #1d2e1d;
+}
+.update-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.update-banner .banner-dismiss {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+.update-banner .banner-dismiss:hover {
+  color: var(--text);
+}
+
 .loading {
   display: grid;
   place-items: center;

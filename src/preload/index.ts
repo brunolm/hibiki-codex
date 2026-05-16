@@ -84,6 +84,20 @@ export type TranscribeStatus = { running: boolean; warming: boolean }
 export type TranscribeLine = { text: string; at: number }
 export type AudioLog = { msg: string; level: 'info' | 'warn' | 'error' }
 
+export type UpdateStatus =
+  | { phase: 'idle' }
+  | { phase: 'checking' }
+  | { phase: 'available'; version: string; releaseDate?: string }
+  | { phase: 'not-available'; version: string }
+  | {
+      phase: 'downloading'
+      version: string
+      percent: number
+      bytesPerSecond: number
+    }
+  | { phase: 'downloaded'; version: string }
+  | { phase: 'error'; message: string }
+
 const api = {
   rust: {
     hello: (name: string): Promise<string> => ipcRenderer.invoke('rust:hello', name),
@@ -191,6 +205,18 @@ const api = {
   window: {
     setAlwaysOnTop: (on: boolean): Promise<void> =>
       ipcRenderer.invoke('window:setAlwaysOnTop', on)
+  },
+  updater: {
+    getStatus: (): Promise<UpdateStatus> =>
+      ipcRenderer.invoke('updater:getStatus'),
+    check: (): Promise<void> => ipcRenderer.invoke('updater:check'),
+    quitAndInstall: (): Promise<void> =>
+      ipcRenderer.invoke('updater:quitAndInstall'),
+    onStatus: (cb: (s: UpdateStatus) => void): (() => void) => {
+      const fn = (_e: unknown, p: UpdateStatus): void => cb(p)
+      ipcRenderer.on('updater:status', fn)
+      return () => ipcRenderer.off('updater:status', fn)
+    }
   }
 }
 
