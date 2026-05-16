@@ -112,9 +112,9 @@ export function SettingsView({
   const [showRuntimeModal, setShowRuntimeModal] = useState(false)
   const [showDiarizeModelModal, setShowDiarizeModelModal] = useState(false)
   // Sub-tab inside the Whisper section. Purely UI state — not persisted.
-  const [whisperSubTab, setWhisperSubTab] = useState<'models' | 'capture'>(
-    'models'
-  )
+  const [whisperSubTab, setWhisperSubTab] = useState<
+    'general' | 'models' | 'capture'
+  >('general')
 
   useEffect(() => {
     void window.api.paths.bundledWhisperVad().then(setBundledVad)
@@ -285,6 +285,14 @@ export function SettingsView({
               <nav className="settings-subtabs" role="tablist" aria-label="Whisper sub-tabs">
                 <button
                   role="tab"
+                  aria-selected={whisperSubTab === 'general'}
+                  className={whisperSubTab === 'general' ? 'active' : ''}
+                  onClick={() => setWhisperSubTab('general')}
+                >
+                  General
+                </button>
+                <button
+                  role="tab"
                   aria-selected={whisperSubTab === 'models'}
                   className={whisperSubTab === 'models' ? 'active' : ''}
                   onClick={() => setWhisperSubTab('models')}
@@ -439,7 +447,7 @@ export function SettingsView({
               </>
               )}
 
-              {whisperSubTab === 'capture' && (
+              {whisperSubTab === 'general' && (
               <>
               <label>
                 <span>Language</span>
@@ -556,7 +564,11 @@ export function SettingsView({
                   />
                 </label>
               </div>
+              </>
+              )}
 
+              {whisperSubTab === 'capture' && (
+              <>
               <p className="hint">
                 Microphone mix is toggled from the <strong>mic button</strong>{' '}
                 next to <em>Start</em> in the chat view — flip it any time,
