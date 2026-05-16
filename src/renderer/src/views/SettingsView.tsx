@@ -109,6 +109,10 @@ export function SettingsView({
   const [showModelModal, setShowModelModal] = useState(false)
   const [showRuntimeModal, setShowRuntimeModal] = useState(false)
   const [showDiarizeModelModal, setShowDiarizeModelModal] = useState(false)
+  // Sub-tab inside the Whisper section. Purely UI state — not persisted.
+  const [whisperSubTab, setWhisperSubTab] = useState<'models' | 'capture'>(
+    'models'
+  )
 
   useEffect(() => {
     void window.api.paths.bundledWhisperVad().then(setBundledVad)
@@ -276,6 +280,27 @@ export function SettingsView({
 
           {tab === 'whisper' && (
             <section className="settings-section">
+              <nav className="settings-subtabs" role="tablist" aria-label="Whisper sub-tabs">
+                <button
+                  role="tab"
+                  aria-selected={whisperSubTab === 'models'}
+                  className={whisperSubTab === 'models' ? 'active' : ''}
+                  onClick={() => setWhisperSubTab('models')}
+                >
+                  Models
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={whisperSubTab === 'capture'}
+                  className={whisperSubTab === 'capture' ? 'active' : ''}
+                  onClick={() => setWhisperSubTab('capture')}
+                >
+                  Capture &amp; runtime
+                </button>
+              </nav>
+
+              {whisperSubTab === 'models' && (
+              <>
               <label>
                 <span>
                   Whisper executable
@@ -367,6 +392,53 @@ export function SettingsView({
                 <small>Leave empty to use the bundled Silero VAD model.</small>
               </label>
 
+              <label>
+                <span>
+                  TinyDiarize model
+                  {draft.whisperDiarize && !draft.whisperDiarizeModel && (
+                    <span className="required-tag">required</span>
+                  )}
+                </span>
+                <div className="row">
+                  <input
+                    className={
+                      draft.whisperDiarize && !draft.whisperDiarizeModel
+                        ? 'required-empty'
+                        : ''
+                    }
+                    value={draft.whisperDiarizeModel}
+                    onChange={(e) =>
+                      set('whisperDiarizeModel', e.target.value)
+                    }
+                    placeholder="C:\path\to\ggml-small.en-tdrz.bin"
+                  />
+                  <button
+                    onClick={() =>
+                      pick(
+                        'whisperDiarizeModel',
+                        'Pick a TinyDiarize model',
+                        [{ name: 'GGML model', extensions: ['bin'] }]
+                      )
+                    }
+                  >
+                    Browse
+                  </button>
+                  <button onClick={() => setShowDiarizeModelModal(true)}>
+                    Download…
+                  </button>
+                </div>
+                <small>
+                  Used only while <strong>Speaker diarization</strong> is on
+                  (enable it under <em>Capture &amp; runtime</em>). Leave empty
+                  to fall back to the main Whisper model — which then has to be
+                  a tdrz-named file for the flag to apply.
+                </small>
+              </label>
+              </>
+              )}
+
+              {whisperSubTab === 'capture' && (
+              <>
               <label>
                 <span>Language</span>
                 <select
@@ -483,28 +555,17 @@ export function SettingsView({
                 </label>
               </div>
 
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={draft.captureMicrophone}
-                  onChange={(e) =>
-                    set('captureMicrophone', e.target.checked)
-                  }
-                />
-                <span>
-                  Mix in microphone
-                  <small>
-                    Capture a microphone alongside system audio and feed the
-                    mix to whisper. Useful for transcribing a call that
-                    includes your own voice. Takes effect on the next Start.
-                  </small>
-                </span>
-              </label>
+              <p className="hint">
+                Microphone mix is toggled from the <strong>mic button</strong>{' '}
+                next to <em>Start</em> in the chat view — flip it any time,
+                including mid-capture. The dropdown below picks which input
+                device the mix uses.
+              </p>
 
               <MicDevicePicker
                 deviceId={draft.captureMicrophoneDevice}
                 onDeviceIdChange={(v) => set('captureMicrophoneDevice', v)}
-                enabled={draft.captureMicrophone}
+                enabled={true}
               />
 
               <ProcessCapturePicker
@@ -522,57 +583,18 @@ export function SettingsView({
                 />
                 <span>
                   Speaker diarization
+                  <span className="beta-tag">beta</span>
                   <small>
                     Pass <code>--tinydiarize</code> to whisper-cli so the
                     transcript includes <code>[SPEAKER_TURN]</code> markers at
                     detected speaker change points. When the toggle is on the
-                    diarization model below is used instead of the main
-                    Whisper model.
+                    diarization model (set under <em>Models</em>) is used
+                    instead of the main Whisper model.
                   </small>
                 </span>
               </label>
-
-              <label>
-                <span>
-                  TinyDiarize model
-                  {draft.whisperDiarize && !draft.whisperDiarizeModel && (
-                    <span className="required-tag">required</span>
-                  )}
-                </span>
-                <div className="row">
-                  <input
-                    className={
-                      draft.whisperDiarize && !draft.whisperDiarizeModel
-                        ? 'required-empty'
-                        : ''
-                    }
-                    value={draft.whisperDiarizeModel}
-                    onChange={(e) =>
-                      set('whisperDiarizeModel', e.target.value)
-                    }
-                    placeholder="C:\path\to\ggml-small.en-tdrz.bin"
-                  />
-                  <button
-                    onClick={() =>
-                      pick(
-                        'whisperDiarizeModel',
-                        'Pick a TinyDiarize model',
-                        [{ name: 'GGML model', extensions: ['bin'] }]
-                      )
-                    }
-                  >
-                    Browse
-                  </button>
-                  <button onClick={() => setShowDiarizeModelModal(true)}>
-                    Download…
-                  </button>
-                </div>
-                <small>
-                  Used only while <strong>Speaker diarization</strong> is on.
-                  Leave empty to fall back to the main Whisper model (which
-                  must itself be a tdrz-named file for the flag to apply).
-                </small>
-              </label>
+              </>
+              )}
             </section>
           )}
 

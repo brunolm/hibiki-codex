@@ -27,6 +27,8 @@ type Props = {
   needsModel: boolean
   noEngineDetected: boolean
   promptTemplates: PromptTemplate[]
+  captureMicrophone: boolean
+  onToggleCaptureMicrophone: () => void
 }
 
 const ENGINES: Engine[] = ['claude', 'codex']
@@ -67,31 +69,15 @@ function formatDuration(ms: number): string {
   return sec > 0 ? `${min}m ${sec}s` : `${min}m`
 }
 
-// Whisper-cli with --tinydiarize emits "[SPEAKER_TURN]" tokens inline at
-// detected speaker change points. Split the line so the renderer can mark
-// each turn with a visual pill instead of showing the literal token.
-function renderMessageText(text: string): JSX.Element {
-  if (!text.includes('[SPEAKER_TURN]')) {
-    return <>{text}</>
-  }
-  const parts = text.split('[SPEAKER_TURN]')
+function SpeakerDivider(): JSX.Element {
   return (
-    <>
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && (
-            <span
-              className="speaker-turn"
-              title="Speaker change detected"
-              aria-label="Speaker change"
-            >
-              ⏵
-            </span>
-          )}
-          {part.trim() ? ` ${part.trim()} ` : ''}
-        </span>
-      ))}
-    </>
+    <div
+      className="speaker-divider"
+      role="separator"
+      aria-label="Speaker change"
+    >
+      <span className="speaker-divider-label">⏵ speaker change</span>
+    </div>
   )
 }
 
@@ -135,7 +121,9 @@ export function ChatView(props: Props): JSX.Element {
     onCancelExchange,
     needsModel,
     noEngineDetected,
-    promptTemplates
+    promptTemplates,
+    captureMicrophone,
+    onToggleCaptureMicrophone
   } = props
 
   const sendBlocked = needsModel || noEngineDetected
@@ -477,6 +465,40 @@ export function ChatView(props: Props): JSX.Element {
             </div>
           </div>
           <div className="pane-actions">
+            <button
+              type="button"
+              className={`mic-toggle${captureMicrophone ? ' active' : ''}`}
+              onClick={onToggleCaptureMicrophone}
+              aria-pressed={captureMicrophone}
+              title={
+                captureMicrophone
+                  ? 'Microphone mix is on — click to stop mixing the mic in'
+                  : 'Microphone mix is off — click to mix your mic into the transcript'
+              }
+              aria-label={
+                captureMicrophone
+                  ? 'Turn microphone mix off'
+                  : 'Turn microphone mix on'
+              }
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M5 11a7 7 0 0 0 14 0" />
+                <line x1="12" y1="18" x2="12" y2="22" />
+                <line x1="8" y1="22" x2="16" y2="22" />
+                {!captureMicrophone && <line x1="3" y1="3" x2="21" y2="21" />}
+              </svg>
+            </button>
             {status.running ? (
               <button onClick={onStop}>Stop</button>
             ) : (
@@ -516,22 +538,39 @@ export function ChatView(props: Props): JSX.Element {
           ) : (
             (() => {
               const cutoff = Math.max(0, messages.length - contextMessageCount)
-              return messages.map((m, i) => {
+              const items: JSX.Element[] = []
+              messages.forEach((m, i) => {
                 const inContext = i >= cutoff
-                return (
-                  <div
-                    key={m.id}
-                    className={
-                      inContext ? 'message in-context' : 'message out-of-context'
-                    }
-                  >
-                    <div className="message-time">
-                      {new Date(m.at).toLocaleTimeString()}
+                const segments = m.text
+                  .split('[SPEAKER_TURN]')
+                  .map((s) => s.trim())
+                segments.forEach((seg, si) => {
+                  // Render a divider BEFORE every segment past the first, so
+                  // the line lives in the gap above the new speaker's bubble
+                  // (or above a trailing-empty slot — which then collapses to
+                  // just a divider between this bubble and the next message).
+                  if (si > 0) {
+                    items.push(<SpeakerDivider key={`${m.id}-div-${si}`} />)
+                  }
+                  if (!seg) return
+                  items.push(
+                    <div
+                      key={`${m.id}-${si}`}
+                      className={
+                        inContext
+                          ? 'message in-context'
+                          : 'message out-of-context'
+                      }
+                    >
+                      <div className="message-time">
+                        {new Date(m.at).toLocaleTimeString()}
+                      </div>
+                      <div className="message-text">{seg}</div>
                     </div>
-                    <div className="message-text">{renderMessageText(m.text)}</div>
-                  </div>
-                )
+                  )
+                })
               })
+              return items
             })()
           )}
           <div ref={messagesEndRef} />

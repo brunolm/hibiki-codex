@@ -218,7 +218,9 @@ const api = {
       deviceId: string,
       durationMs?: number
     ): Promise<{ peak: number; samples: number }> =>
-      ipcRenderer.invoke('audio:testMicrophone', deviceId, durationMs)
+      ipcRenderer.invoke('audio:testMicrophone', deviceId, durationMs),
+    setCaptureMicrophone: (enabled: boolean): Promise<void> =>
+      ipcRenderer.invoke('audio:setCaptureMicrophone', enabled)
   },
   platform: process.platform as NodeJS.Platform,
   window: {

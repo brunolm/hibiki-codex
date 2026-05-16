@@ -70,6 +70,14 @@ export function App(): JSX.Element {
     if (settings) setSettings({ ...settings, alwaysOnTop: next })
   }
 
+  async function toggleCaptureMicrophone(): Promise<void> {
+    const next = !(settings?.captureMicrophone ?? false)
+    // Main process persists the setting AND applies it live to a running
+    // capture, so we just optimistically mirror the new value locally.
+    await window.api.audio.setCaptureMicrophone(next)
+    if (settings) setSettings({ ...settings, captureMicrophone: next })
+  }
+
   // The warmup window can be near-instant on warm caches, which makes the
   // splash flicker. Hold the warming=true display for at least 3s so the
   // user actually registers the state change.
@@ -486,6 +494,8 @@ export function App(): JSX.Element {
           needsModel={needsModel}
           noEngineDetected={noEngineDetected}
           promptTemplates={settings?.promptTemplates ?? []}
+          captureMicrophone={settings?.captureMicrophone ?? false}
+          onToggleCaptureMicrophone={() => void toggleCaptureMicrophone()}
         />
       ) : settings ? (
         <SettingsView

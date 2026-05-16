@@ -24,10 +24,27 @@ let started = false
 type Staging = { chunks: Uint8Array[]; bytes: number }
 let micProc: CaptureProc | null = null
 let micActive = false
+// Live runtime flag — flipped by setCaptureMicrophone() so the user can
+// toggle the mic mix from the chat view without stopping transcription.
+// Distinct from settings.captureMicrophone because the persisted setting
+// might differ from the current capture state (e.g. mic process died but
+// the setting stays on).
+let mixMicEnabled = false
+let mixMicDeviceId = ''
 const loopStaging: Staging = { chunks: [], bytes: 0 }
 const micStaging: Staging = { chunks: [], bytes: 0 }
 let mixTimer: ReturnType<typeof setInterval> | null = null
 const MIX_BUFFER_LIMIT_BYTES = 5 * 32000 // 5s @ 16-bit mono 16kHz
+// Last time a loopback chunk arrived while mic-mix is active. WASAPI loopback
+// stops emitting packets when the Windows audio engine has nothing to render,
+// so a silent system would leave the mix pump starved forever. We use this
+// to detect the dormant state and flush mic data through alone.
+let lastLoopChunkAt = 0
+// Grace period before treating loopback as dormant. Has to be long enough
+// to absorb normal jitter between loop and mic packet arrivals, short
+// enough that the user's voice still feels responsive when they're not
+// playing anything else.
+const LOOP_DORMANT_GRACE_MS = 250
 
 type LogFn = (msg: string, level?: 'info' | 'warn' | 'error') => void
 let log: LogFn = () => {}
@@ -293,10 +310,25 @@ function pumpMix(): void {
   // we never split a sample across mixer runs.
   let common = Math.min(loopStaging.bytes, micStaging.bytes)
   common -= common % 2
-  if (common === 0) return
-  const loopBuf = takeStagingBytes(loopStaging, common)
-  const micBuf = takeStagingBytes(micStaging, common)
-  ringPush(mixPcm16LE(loopBuf, micBuf))
+  if (common > 0) {
+    const loopBuf = takeStagingBytes(loopStaging, common)
+    const micBuf = takeStagingBytes(micStaging, common)
+    ringPush(mixPcm16LE(loopBuf, micBuf))
+  }
+  // If the loop side has been quiet long enough that we're confident WASAPI
+  // is in its "nothing is playing" suspend state, flush mic data alone.
+  // Without this, a user transcribing only their voice (no system audio)
+  // would never see their words reach whisper — the mic queue would just
+  // grow until the 5s cap dropped the oldest bytes.
+  const now = Date.now()
+  if (
+    micStaging.bytes >= 2 &&
+    now - lastLoopChunkAt > LOOP_DORMANT_GRACE_MS
+  ) {
+    let n = micStaging.bytes
+    n -= n % 2
+    if (n > 0) ringPush(takeStagingBytes(micStaging, n))
+  }
 }
 
 function resolveLoopbackScript(): string {
@@ -440,8 +472,14 @@ export async function startAudioCapture(): Promise<void> {
 
   proc.stdout.on('data', (chunk: Buffer) => {
     if (chunk.byteLength === 0) return
-    if (mixMic) pushStaging(loopStaging, new Uint8Array(chunk))
-    else ringPush(new Uint8Array(chunk))
+    // Read mixMicEnabled live so a runtime toggle re-routes the loop bytes
+    // to the staging mixer without having to restart capture.
+    if (mixMicEnabled) {
+      lastLoopChunkAt = Date.now()
+      pushStaging(loopStaging, new Uint8Array(chunk))
+    } else {
+      ringPush(new Uint8Array(chunk))
+    }
   })
 
   proc.stderr.on('data', (chunk: Buffer) => {
@@ -460,8 +498,27 @@ export async function startAudioCapture(): Promise<void> {
     log(`capture process error: ${err.message}`, 'error')
   })
 
+  // Sync the live runtime flag to the persisted setting at Start so the
+  // user's last toggle survives across restarts. The chat-view button updates
+  // both the setting and this flag at runtime via setCaptureMicrophone().
+  mixMicEnabled = mixMic
+  mixMicDeviceId = settings.captureMicrophoneDevice ?? ''
+
   if (!mixMic) return
 
+  // Seed lastLoopChunkAt so the dormant-loop fallback only kicks in after the
+  // grace period from this Start, not immediately because of the epoch-0
+  // initial value.
+  lastLoopChunkAt = Date.now()
+
+  spawnMicCapture()
+
+  if (!mixTimer) mixTimer = setInterval(pumpMix, 50)
+}
+
+function spawnMicCapture(): void {
+  if (micProc) return // already running
+  const psh = process.env['AUDIO_POWERSHELL'] || 'pwsh'
   try {
     // The mic uses the system loopback script in microphone mode — even when
     // the primary loop source is a per-process capture, the user's mic is a
@@ -473,8 +530,8 @@ export async function startAudioCapture(): Promise<void> {
       '-Mode',
       'microphone'
     ]
-    if (settings.captureMicrophoneDevice) {
-      micArgs.push('-DeviceId', settings.captureMicrophoneDevice)
+    if (mixMicDeviceId) {
+      micArgs.push('-DeviceId', mixMicDeviceId)
     }
     micProc = spawn(psh, micArgs, {
       windowsHide: true,
@@ -485,34 +542,83 @@ export async function startAudioCapture(): Promise<void> {
     micActive = false
     log(`failed to spawn microphone capture: ${(err as Error).message}`, 'warn')
     micProc = null
+    return
   }
 
+  micProc.stdout.on('data', (chunk: Buffer) => {
+    if (chunk.byteLength > 0) pushStaging(micStaging, new Uint8Array(chunk))
+  })
+  micProc.stderr.on('data', (chunk: Buffer) => {
+    const text = chunk.toString().trim()
+    if (text) log(`[mic] ${text}`, 'warn')
+  })
+  micProc.on('exit', (code) => {
+    micActive = false
+    micProc = null
+    // Drain any unmixed loop staging so we don't lose the last second when
+    // the mic side gives up partway through.
+    flushStagingToRing(loopStaging)
+    micStaging.chunks.length = 0
+    micStaging.bytes = 0
+    if (code !== 0 && code !== null)
+      log(`microphone capture exited ${code} — falling back to loopback only`, 'warn')
+  })
+  micProc.on('error', (err) => {
+    micActive = false
+    log(`microphone capture error: ${err.message}`, 'warn')
+  })
+}
+
+function killMicCapture(): void {
   if (micProc) {
-    micProc.stdout.on('data', (chunk: Buffer) => {
-      if (chunk.byteLength > 0) pushStaging(micStaging, new Uint8Array(chunk))
-    })
-    micProc.stderr.on('data', (chunk: Buffer) => {
-      const text = chunk.toString().trim()
-      if (text) log(`[mic] ${text}`, 'warn')
-    })
-    micProc.on('exit', (code) => {
-      micActive = false
-      micProc = null
-      // Drain any unmixed loop staging so we don't lose the last second when
-      // the mic side gives up partway through.
-      flushStagingToRing(loopStaging)
-      micStaging.chunks.length = 0
-      micStaging.bytes = 0
-      if (code !== 0 && code !== null)
-        log(`microphone capture exited ${code} — falling back to loopback only`, 'warn')
-    })
-    micProc.on('error', (err) => {
-      micActive = false
-      log(`microphone capture error: ${err.message}`, 'warn')
-    })
+    try {
+      micProc.kill()
+    } catch {}
+    // The exit handler above will null micProc, clear micActive, flush loop
+    // staging, and reset micStaging. Don't duplicate that work here.
+  }
+}
+
+// Toggle the microphone-mix live. Safe to call at any time, including when
+// capture isn't running — the flag is read by startAudioCapture too. Pass a
+// non-empty deviceId to override the persisted captureMicrophoneDevice.
+export function setCaptureMicrophone(enabled: boolean, deviceId: string): void {
+  const deviceChanged = enabled && deviceId !== mixMicDeviceId
+  const wasEnabled = mixMicEnabled
+  mixMicEnabled = enabled
+  mixMicDeviceId = deviceId
+
+  if (!started) return // not capturing — flag is enough; Start will honour it
+
+  if (enabled && !wasEnabled) {
+    // Turn on mid-capture. Loop bytes that arrived in the last few ms went
+    // straight to the ring; that's fine — only new bytes get staged for mix.
+    lastLoopChunkAt = Date.now()
+    spawnMicCapture()
+    if (!mixTimer) mixTimer = setInterval(pumpMix, 50)
+    log('microphone mix: on', 'info')
+    return
   }
 
-  mixTimer = setInterval(pumpMix, 50)
+  if (!enabled && wasEnabled) {
+    // Turn off mid-capture. Drain any in-flight loop bytes back to the ring
+    // (they were staged for a mix that's no longer going to happen) and stop
+    // the mix pump.
+    killMicCapture()
+    flushStagingToRing(loopStaging)
+    if (mixTimer) {
+      clearInterval(mixTimer)
+      mixTimer = null
+    }
+    log('microphone mix: off', 'info')
+    return
+  }
+
+  if (enabled && deviceChanged && micProc) {
+    // Device picker change while mic is on — respawn against the new device.
+    killMicCapture()
+    spawnMicCapture()
+  }
 }
 
 export function stopAudioCapture(): void {
@@ -540,6 +646,7 @@ export function stopAudioCapture(): void {
   loopStaging.bytes = 0
   micStaging.chunks.length = 0
   micStaging.bytes = 0
+  lastLoopChunkAt = 0
 }
 
 export function resetBuffer(): void {

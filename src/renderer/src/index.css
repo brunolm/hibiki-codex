@@ -177,6 +177,30 @@ textarea {
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
+.mic-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 120ms, background 120ms, border-color 120ms;
+}
+.mic-toggle:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--bg-elev-2);
+}
+.mic-toggle.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
 .engine-icon {
   display: inline-block;
   flex-shrink: 0;
@@ -367,19 +391,37 @@ textarea {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
 }
-.speaker-turn {
-  display: inline-flex;
+.speaker-divider {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 1.1rem;
-  height: 1.1rem;
-  margin: 0 0.3rem;
-  border-radius: 999px;
-  background: var(--bg-elev-2);
-  color: var(--accent);
+  gap: 0.6rem;
+  margin: 0.1rem 0.5rem;
   font-size: 0.7rem;
-  line-height: 1;
-  vertical-align: -0.15em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.speaker-divider::before,
+.speaker-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent) 50%,
+    transparent 100%
+  );
+  opacity: 0.6;
+}
+.speaker-divider-label {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg-elev));
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  white-space: nowrap;
 }
 .message {
   background: var(--bg-elev);
@@ -678,6 +720,34 @@ textarea {
 }
 .composer {
   position: relative;
+}
+.settings-subtabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  padding: 0.2rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.settings-subtabs button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.settings-subtabs button:hover:not(.active) {
+  color: var(--text);
+  background: var(--bg-elev-2);
+}
+.settings-subtabs button.active {
+  color: var(--text);
+  background: var(--bg-elev-2);
+  border-color: var(--border);
 }
 .mic-test-result {
   margin-top: 0.4rem;
@@ -1178,6 +1248,17 @@ button.danger.solid:hover:not(:disabled) {
   letter-spacing: 0.06em;
   color: var(--warn);
   border: 1px solid var(--warn);
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  vertical-align: 1px;
+}
+.beta-tag {
+  margin-left: 0.5rem;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
   padding: 0.05rem 0.4rem;
   border-radius: 999px;
   vertical-align: 1px;

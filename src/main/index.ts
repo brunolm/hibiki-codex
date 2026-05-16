@@ -303,6 +303,16 @@ ipcMain.handle(
   (_e, deviceId: string, durationMs?: number) =>
     audio.testMicrophone(deviceId, durationMs)
 )
+ipcMain.handle(
+  'audio:setCaptureMicrophone',
+  (_e, enabled: boolean) => {
+    // Persist the toggle so the next Start (and the next launch) honours it,
+    // then apply it live so a running capture picks it up without a Stop/Start.
+    settings.update({ captureMicrophone: enabled })
+    const s = settings.get()
+    audio.setCaptureMicrophone(enabled, s.captureMicrophoneDevice ?? '')
+  }
+)
 
 ipcMain.handle('updater:getStatus', () => updater.getStatus())
 ipcMain.handle('updater:check', () => updater.check())
